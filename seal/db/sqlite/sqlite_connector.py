@@ -2,7 +2,7 @@ import sqlite3
 
 from seal.config.configuration import Configuration
 from seal.db.connector import DBConnector
-from seal.wrapper.decorator import singleton
+from seal.wrapper.singleton import singleton
 
 
 @singleton

@@ -1,6 +1,6 @@
 import yaml
 
-from seal.wrapper.decorator import singleton
+from seal.wrapper.singleton import singleton
 
 
 @singleton
