@@ -1,7 +1,6 @@
 from datetime import datetime
-from context.context import PageContext, WebContext
-from config import config
-from db.sqlite.sqlite_connector import SqliteConnector
+from seal.context.context import PageContext, WebContext
+from seal.db.sqlite.sqlite_connector import SqliteConnector
 
 
 class ChainedQuery:
@@ -13,7 +12,7 @@ class ChainedQuery:
         self.__page = ()
         self.__conn = SqliteConnector().get_connection()
         self.__raw = ""
-        self.placeholder = '?' if config['data_source'] == 'sqlite' else '%s'
+        self.placeholder = '?'
 
     def __cols(self):
         if len(self.__select_cols) == 0:

@@ -1,6 +1,5 @@
 from datetime import datetime
 from seal.context.context import PageContext, WebContext
-from seal.config import config
 from seal.db.mysql.mysql_connector import MysqlConnector
 
 
@@ -13,7 +12,7 @@ class ChainedQuery:
         self.__page = ()
         self.__conn = MysqlConnector().get_connection()
         self.__raw = ""
-        self.placeholder = '?' if config['data_source'] == 'sqlite' else '%s'
+        self.placeholder = '%s'
 
     def __cols(self):
         if len(self.__select_cols) == 0:

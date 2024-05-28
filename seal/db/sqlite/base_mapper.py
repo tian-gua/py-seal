@@ -1,18 +1,16 @@
 from datetime import datetime
-from model.base_entity import BaseEntity
+from seal.model.base_entity import BaseEntity
 from builtins import list as _list
-from context.context import WebContext
-from config import config
+from seal.context.context import WebContext
+from seal.db.sqlite.sqlite_connector import SqliteConnector
 import abc
-
-from db.sqlite.sqlite_connector import SqliteConnector
 
 
 class BaseMapper(metaclass=abc.ABCMeta):
 
     def __init__(self, entity_clz):
         self.clz = entity_clz
-        self.placeholder = '?' if config['data_source'] == 'sqlite' else '%s'
+        self.placeholder = '?'
 
     def all(self):
         """

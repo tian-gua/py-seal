@@ -32,6 +32,7 @@ def entity(cls, table: str = None, ignore: list[str] = None):
 
 def singleton(orig_cls):
     orig_new = orig_cls.__new__
+    orig_init = orig_cls.__init__
     instance = None
 
     @wraps(orig_cls.__new__)
@@ -39,7 +40,15 @@ def singleton(orig_cls):
         nonlocal instance
         if instance is None:
             instance = orig_new(cls, *args, **kwargs)
+            orig_init(instance, *args, **kwargs)
         return instance
 
+    @wraps(orig_cls.__init__)
+    def __init__(cls, *args, **kwargs):
+        s_init = orig_cls.s_init
+        if s_init is not None:
+            s_init(cls, *args, **kwargs)
+
     orig_cls.__new__ = __new__
+    orig_cls.__init__ = __init__
     return orig_cls

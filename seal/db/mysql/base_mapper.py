@@ -2,7 +2,6 @@ from datetime import datetime
 from seal.model.base_entity import BaseEntity
 from builtins import list as _list
 from seal.context.context import WebContext
-from seal.config import config
 import abc
 
 from seal.db.mysql.mysql_connector import MysqlConnector
@@ -12,7 +11,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
 
     def __init__(self, entity_clz):
         self.clz = entity_clz
-        self.placeholder = '?' if config['data_source'] == 'sqlite' else '%s'
+        self.placeholder = '%s'
 
     def all(self):
         """

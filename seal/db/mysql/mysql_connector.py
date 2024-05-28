@@ -1,6 +1,6 @@
 import pymysql
 import pymysql.cursors
-from seal.config import config
+from seal.config.configuration import Configuration
 from seal.db.connector import DBConnector
 from seal.wrapper.decorator import singleton
 
@@ -8,7 +8,7 @@ from seal.wrapper.decorator import singleton
 @singleton
 class MysqlConnector(DBConnector):
     def __init__(self):
-        self.config = config['mysql']
+        self.config = Configuration().config['mysql']
         # self.pool = mysql.connector.pooling.MySQLConnectionPool(**self.config)
 
     def get_connection(self):
