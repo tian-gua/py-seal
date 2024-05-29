@@ -31,4 +31,3 @@ def get_seal():
 
 
 seal: Seal | None = None
->>>>>>> next
