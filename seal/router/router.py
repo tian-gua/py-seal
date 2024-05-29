@@ -4,8 +4,8 @@ from functools import wraps
 import jwt
 from fastapi import FastAPI, Request, Response, HTTPException, Depends
 from starlette.middleware.cors import CORSMiddleware
-from seal.context.context import WebContext
-from seal.model.response import Response as ResponseModel
+from ..context import WebContext
+from ..model import Response as ResponseModel
 
 jwt_key = 'melon'
 

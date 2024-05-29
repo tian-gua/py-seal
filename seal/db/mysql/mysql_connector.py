@@ -1,8 +1,8 @@
 import pymysql
 import pymysql.cursors
-from seal.config.configuration import Configuration
-from seal.db.connector import DBConnector
-from seal.wrapper.singleton import singleton
+from ...config import Configuration
+from ..connector import DBConnector
+from ...wrapper import singleton
 
 
 @singleton

@@ -1,6 +1,6 @@
 from contextvars import ContextVar
 
-from seal.wrapper.singleton import singleton
+from ..wrapper.singleton import singleton
 
 page_ctx = ContextVar('page')
 

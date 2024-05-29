@@ -1,6 +1,6 @@
 from datetime import datetime
-from seal.context.context import PageContext, WebContext
-from seal.db.mysql.mysql_connector import MysqlConnector
+from ...context import PageContext, WebContext
+from .mysql_connector import MysqlConnector
 
 
 class ChainedQuery:
