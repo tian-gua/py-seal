@@ -6,15 +6,16 @@ from fastapi import FastAPI, Request, Response, HTTPException, Depends
 from starlette.middleware.cors import CORSMiddleware
 from ..context import WebContext
 from ..model import Response as ResponseModel
-
-jwt_key = 'melon'
+from .. import get_seal
 
 
 async def verify_token(request: Request = Request):
     if request.method == 'OPTIONS' or request.url.path in ['/login/submit']:
         return None
     try:
-        payload = jwt.decode(request.headers['Authorization'], jwt_key, algorithms=["HS256"])
+        payload = jwt.decode(request.headers['Authorization'],
+                             get_seal().get_config('jwt_key'),
+                             algorithms=["HS256"])
         WebContext().set({'uid': payload['uid']})
     except Exception as e:
         print(e)
