@@ -1,9 +1,9 @@
-from datetime import datetime
-from seal.model.base_entity import BaseEntity
-from builtins import list as _list
-from seal.context.context import WebContext
-from seal.db.sqlite.sqlite_connector import SqliteConnector
 import abc
+from datetime import datetime
+from builtins import list as _list
+from ...context import WebContext
+from .sqlite_connector import SqliteConnector
+from ...model import BaseEntity
 
 
 class BaseMapper(metaclass=abc.ABCMeta):

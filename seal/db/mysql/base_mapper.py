@@ -1,10 +1,9 @@
-from datetime import datetime
-from seal.model.base_entity import BaseEntity
-from builtins import list as _list
-from seal.context.context import WebContext
 import abc
-
-from seal.db.mysql.mysql_connector import MysqlConnector
+from datetime import datetime
+from builtins import list as _list
+from ...context import WebContext
+from ...model import BaseEntity
+from .mysql_connector import MysqlConnector
 
 
 class BaseMapper(metaclass=abc.ABCMeta):

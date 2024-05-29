@@ -1,6 +1,6 @@
 from datetime import datetime
-from seal.context.context import PageContext, WebContext
-from seal.db.sqlite.sqlite_connector import SqliteConnector
+from ...context import PageContext, WebContext
+from .sqlite_connector import SqliteConnector
 
 
 class ChainedQuery:
