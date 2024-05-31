@@ -1,9 +1,9 @@
-__author__ = 'melon'
-__email__ = '77729052@qq.com'
-__version__ = '0.0.7'
-
 from .config import Configuration
 from .wrapper import singleton
+
+__author__ = 'melon'
+__email__ = '77729052@qq.com'
+__version__ = '0.0.8'
 
 
 @singleton

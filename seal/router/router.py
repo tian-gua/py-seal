@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request, Response, HTTPException, Depends
 from starlette.middleware.cors import CORSMiddleware
 from ..context import WebContext
 from ..model import Response as ResponseModel
+from ..exception import BusinessException
 from .. import get_seal
 
 
@@ -18,7 +19,6 @@ async def verify_token(request: Request = Request):
                              algorithms=["HS256"])
         WebContext().set({'uid': payload['uid']})
     except Exception as e:
-        print(e)
         raise HTTPException(status_code=401, detail=f"Token is invalid: {e}")
 
 
@@ -52,8 +52,13 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 def response_body(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
-        result = await func(*args, **kwargs)
-        return ResponseModel.build(result).success()
+        try:
+            result = await func(*args, **kwargs)
+            return ResponseModel.build(result).success()
+        except BusinessException as e:
+            return ResponseModel.build().error(message=e.message, code=e.code)
+        except Exception as e:
+            return ResponseModel.build().error(message=str(e))
 
     return wrapper
 
