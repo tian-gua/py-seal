@@ -8,8 +8,9 @@ from ...model import BaseEntity
 
 class BaseMapper(metaclass=abc.ABCMeta):
 
-    def __init__(self, entity_clz):
-        self.clz = entity_clz
+    def __init__(self, clz, table: str = None):
+        self.clz = clz
+        self.table = table if table is not None else self.clz.table_name()
         self.placeholder = '?'
 
     def all(self):
@@ -21,7 +22,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         try:
             c = conn.cursor()
             cols = ', '.join(self.clz.columns())
-            sql = f'SELECT {cols} FROM {self.clz.table_name()} WHERE deleted = 0'
+            sql = f'SELECT {cols} FROM {self.table} WHERE deleted = 0'
             print(f'#### sql: {sql}')
             result = c.execute(sql, ())
             rows = result.fetchall()
@@ -42,7 +43,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         """
         conditions['deleted'] = 0
         cols = ', '.join(self.clz.columns())
-        sql = f'SELECT {cols} FROM {self.clz.table_name()} where '
+        sql = f'SELECT {cols} FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
                              conditions.items()])
         print(f'#### sql: {sql}')
@@ -69,7 +70,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         """
         conditions['deleted'] = 0
         cols = ', '.join(self.clz.columns())
-        sql = f'SELECT {cols} FROM {self.clz.table_name()} where '
+        sql = f'SELECT {cols} FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
                              conditions.items()])
         print(f'#### sql: {sql}')
@@ -99,7 +100,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         """
         conditions['deleted'] = 0
         cols = ', '.join(self.clz.columns())
-        sql = f'SELECT {cols} FROM {self.clz.table_name()} where '
+        sql = f'SELECT {cols} FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
                              conditions.items()])
         sql += f' limit {page_size} offset {(page - 1) * page_size}'
@@ -127,7 +128,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         :return: count of entities
         """
         conditions['deleted'] = 0
-        sql = f'SELECT count(*) FROM {self.clz.table_name()} where '
+        sql = f'SELECT count(*) FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
                              conditions.items()])
         print(f'#### sql: {sql}')
@@ -157,7 +158,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
             c = conn.cursor()
             cols = ', '.join(self.clz.columns(exclude=["id"]))
             placeholders = ', '.join([self.placeholder for _ in self.clz.columns(exclude=["id"])])
-            sql = f'INSERT INTO {self.clz.table_name()} ({cols}) VALUES ({placeholders})'
+            sql = f'INSERT INTO {self.table} ({cols}) VALUES ({placeholders})'
             print(f'#### sql: {sql}')
             c.execute(sql, tuple([getattr(entity, col) for col in self.clz.columns(exclude=["id"])]))
             conn.commit()
@@ -177,7 +178,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         try:
             c = conn.cursor()
             cols = [f'{col} = {self.placeholder}' for col in self.clz.columns(exclude=["id"])]
-            sql = f'UPDATE {self.clz.table_name()} SET {", ".join(cols)} WHERE id = {self.placeholder}'
+            sql = f'UPDATE {self.table} SET {", ".join(cols)} WHERE id = {self.placeholder}'
             print(f'#### sql: {sql}')
             c.execute(sql, tuple([getattr(entity, col) for col in self.clz.columns(exclude=["id"])] + [entity.id]))
             conn.commit()
@@ -195,7 +196,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         """
         sets += [('gmt_modified', datetime.now()), ('update_by', WebContext().uid())]
         conditions += [('deleted', 0)]
-        sql = f'UPDATE {self.clz.table_name()} SET '
+        sql = f'UPDATE {self.table} SET '
         sql += ', '.join([f'{col} = {self.placeholder}' for col, val in sets])
         sql += ' WHERE '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
@@ -220,7 +221,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         :return: no return
         """
         conditions['deleted'] = 0
-        sql = f'DELETE FROM {self.clz.table_name()} where '
+        sql = f'DELETE FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, val in
                              conditions.items()])
         print(f'#### sql: {sql}')

@@ -4,8 +4,9 @@ from .sqlite_connector import SqliteConnector
 
 
 class ChainedQuery:
-    def __init__(self, entity_clz, logic_delete_col: str = None):
-        self.clz = entity_clz
+    def __init__(self, clz, table: str = None, logic_delete_col: str = None):
+        self.clz = clz
+        self.table = table if table is not None else self.clz.table_name()
         self.__conditions = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
         self.__select_cols = ()
         self.__sets = {}
@@ -85,7 +86,7 @@ class ChainedQuery:
     def count(self):
         c = self.__conn.cursor()
         try:
-            sql = f'SELECT count(1) FROM {self.clz.table_name()} {self.__where()}'
+            sql = f'SELECT count(1) FROM {self.table} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
             result = c.execute(sql, self.__args())
@@ -97,7 +98,7 @@ class ChainedQuery:
     def list(self):
         c = self.__conn.cursor()
         try:
-            sql = f'SELECT {self.__cols()} FROM {self.clz.table_name()} {self.__where()} {self.__limit()}'
+            sql = f'SELECT {self.__cols()} FROM {self.table} {self.__where()} {self.__limit()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
             if len(self.__page) > 0:
@@ -116,7 +117,7 @@ class ChainedQuery:
     def first(self):
         c = self.__conn.cursor()
         try:
-            sql = f'SELECT {self.__cols()} FROM {self.clz.table_name()} {self.__where()}'
+            sql = f'SELECT {self.__cols()} FROM {self.table} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
             result = c.execute(sql, self.__args())
@@ -139,7 +140,7 @@ class ChainedQuery:
             if self.__conditions is None or self.__where() == '':
                 raise Exception('update condition is required')
 
-            sql = f'UPDATE {self.clz.table_name()} SET {", ".join([f"{col} = {self.placeholder}" for col in self.__sets.keys()])} {self.__where()}'
+            sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.__sets.keys()])} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {tuple(self.__sets.values()) + self.__args()}')
             c.execute(sql, tuple(self.__sets.values()) + self.__args())
@@ -153,7 +154,7 @@ class ChainedQuery:
             if self.__conditions is None or self.__where() == '':
                 raise Exception('delete condition is required')
 
-            sql = f'DELETE FROM {self.clz.table_name()} {self.__where()}'
+            sql = f'DELETE FROM {self.table} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
             c.execute(sql, self.__args())

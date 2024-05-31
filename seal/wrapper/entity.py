@@ -12,7 +12,7 @@ def parametrized(decorator):
 
 
 @parametrized
-def entity(cls, table: str, ignore: list[str] = None):
+def entity(cls, table: str = None, ignore: list[str] = None):
     def columns(exclude: list[str] = None):
         cs = [key for key in cls.model_fields if
               (exclude is None or key not in exclude) and (ignore is None or key not in ignore)]

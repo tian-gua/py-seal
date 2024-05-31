@@ -4,8 +4,9 @@ from .mysql_connector import MysqlConnector
 
 
 class ChainedQuery:
-    def __init__(self, entity_clz, logic_delete_col: str = None):
-        self.clz = entity_clz
+    def __init__(self, clz, table: str = None, logic_delete_col: str = None):
+        self.clz = clz
+        self.table = table if table is not None else self.clz.table_name()
         self.__conditions = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
         self.__select_cols = ()
         self.__sets = {}
