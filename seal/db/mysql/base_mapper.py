@@ -2,14 +2,15 @@ import abc
 from datetime import datetime
 from builtins import list as _list
 from ...context import WebContext
-from ...model import BaseEntity
+from ...model import BaseEntity, PageResult
 from .mysql_connector import MysqlConnector
 
 
 class BaseMapper(metaclass=abc.ABCMeta):
 
-    def __init__(self, entity_clz):
-        self.clz = entity_clz
+    def __init__(self, clz, table: str = None):
+        self.clz = clz
+        self.table = table if table is not None else self.clz.table_name()
         self.placeholder = '%s'
 
     def all(self):
@@ -21,7 +22,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         try:
             c = conn.cursor()
             cols = ', '.join(self.clz.columns())
-            sql = f'SELECT {cols} FROM {self.clz.table_name()} WHERE deleted = 0'
+            sql = f'SELECT {cols} FROM {self.table} WHERE deleted = 0'
             print(f'#### sql: {sql}')
             affected = c.execute(sql, ())
             print(f'#### affected rows: {affected}')
@@ -43,7 +44,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         """
         conditions['deleted'] = 0
         cols = ', '.join(self.clz.columns())
-        sql = f'SELECT {cols} FROM {self.clz.table_name()} where '
+        sql = f'SELECT {cols} FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
                              conditions.items()])
         print(f'#### sql: {sql}')
@@ -71,7 +72,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         """
         conditions['deleted'] = 0
         cols = ', '.join(self.clz.columns())
-        sql = f'SELECT {cols} FROM {self.clz.table_name()} where '
+        sql = f'SELECT {cols} FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
                              conditions.items()])
         print(f'#### sql: {sql}')
@@ -90,7 +91,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         finally:
             conn.close()
 
-    def page(self, page: int, page_size: int, **conditions):
+    def page(self, page: int, page_size: int, **conditions) -> PageResult:
         """
         Page entities by multiple columns
         Example: page(1, 10, ('name', 'test'), ('status', 1))
@@ -98,11 +99,11 @@ class BaseMapper(metaclass=abc.ABCMeta):
         :param page: page number
         :param page_size: page size
         :param conditions: list of tuple of column and value
-        :return: list of entities
+        :return: page result
         """
         conditions['deleted'] = 0
         cols = ', '.join(self.clz.columns())
-        sql = f'SELECT {cols} FROM {self.clz.table_name()} where '
+        sql = f'SELECT {cols} FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
                              conditions.items()])
         sql += f' limit {page_size} offset {(page - 1) * page_size}'
@@ -118,7 +119,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
             entities = []
             for row in rows:
                 entities.append(self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())}))
-            return entities
+            return PageResult(page, page_size, self.count(**conditions), entities)
         finally:
             conn.close()
 
@@ -131,7 +132,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         :return: count of entities
         """
         conditions['deleted'] = 0
-        sql = f'SELECT count(*) FROM {self.clz.table_name()} where '
+        sql = f'SELECT count(*) FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
                              conditions.items()])
         print(f'#### sql: {sql}')
@@ -155,14 +156,14 @@ class BaseMapper(metaclass=abc.ABCMeta):
         now = datetime.now()
         entity.deleted = 0
         entity.create_by = WebContext().uid()
-        entity.gmt_create = now
+        entity.create_at = now
 
         conn = MysqlConnector().get_connection()
         try:
             c = conn.cursor()
             cols = ', '.join(self.clz.columns(exclude=["id"]))
             placeholders = ', '.join([self.placeholder for _ in self.clz.columns(exclude=["id"])])
-            sql = f'INSERT INTO {self.clz.table_name()} ({cols}) VALUES ({placeholders})'
+            sql = f'INSERT INTO {self.table} ({cols}) VALUES ({placeholders})'
             print(f'#### sql: {sql}')
             affected = c.execute(sql, tuple([getattr(entity, col) for col in self.clz.columns(exclude=["id"])]))
             print(f'#### affected rows: {affected}')
@@ -183,7 +184,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         try:
             c = conn.cursor()
             cols = [f'{col} = {self.placeholder}' for col in self.clz.columns(exclude=["id"])]
-            sql = f'UPDATE {self.clz.table_name()} SET {", ".join(cols)} WHERE id = {self.placeholder}'
+            sql = f'UPDATE {self.table} SET {", ".join(cols)} WHERE id = {self.placeholder}'
             print(f'#### sql: {sql}')
             affected = c.execute(sql,
                                  tuple([getattr(entity, col) for col in self.clz.columns(exclude=["id"])] + [
@@ -202,9 +203,9 @@ class BaseMapper(metaclass=abc.ABCMeta):
         :param conditions: list of tuple of column and value for condition
         :return: no return
         """
-        sets += [('gmt_modified', datetime.now()), ('update_by', WebContext().uid())]
+        sets += [('update_at', datetime.now()), ('update_by', WebContext().uid())]
         conditions += [('deleted', 0)]
-        sql = f'UPDATE {self.clz.table_name()} SET '
+        sql = f'UPDATE {self.table} SET '
         sql += ', '.join([f'{col} = {self.placeholder}' for col, val in sets])
         sql += ' WHERE '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, *val in
@@ -230,7 +231,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         :return: no return
         """
         conditions['deleted'] = 0
-        sql = f'DELETE FROM {self.clz.table_name()} where '
+        sql = f'DELETE FROM {self.table} where '
         sql += ' and '.join([f'{col} {"=" if len(val) == 1 else val[1]} {self.placeholder}' for col, val in
                              conditions.items()])
         print(f'#### sql: {sql}')
