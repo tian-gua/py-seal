@@ -2,7 +2,7 @@ import abc
 from datetime import datetime
 from builtins import list as _list
 from ...context import WebContext
-from ...model import BaseEntity
+from ...model import BaseEntity, PageResult
 from .mysql_connector import MysqlConnector
 
 
@@ -91,7 +91,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         finally:
             conn.close()
 
-    def page(self, page: int, page_size: int, **conditions):
+    def page(self, page: int, page_size: int, **conditions) -> PageResult:
         """
         Page entities by multiple columns
         Example: page(1, 10, ('name', 'test'), ('status', 1))
@@ -99,7 +99,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         :param page: page number
         :param page_size: page size
         :param conditions: list of tuple of column and value
-        :return: list of entities
+        :return: page result
         """
         conditions['deleted'] = 0
         cols = ', '.join(self.clz.columns())
@@ -119,7 +119,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
             entities = []
             for row in rows:
                 entities.append(self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())}))
-            return entities
+            return PageResult(page, page_size, self.count(**conditions), entities)
         finally:
             conn.close()
 
@@ -156,7 +156,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         now = datetime.now()
         entity.deleted = 0
         entity.create_by = WebContext().uid()
-        entity.gmt_create = now
+        entity.create_at = now
 
         conn = MysqlConnector().get_connection()
         try:
@@ -203,7 +203,7 @@ class BaseMapper(metaclass=abc.ABCMeta):
         :param conditions: list of tuple of column and value for condition
         :return: no return
         """
-        sets += [('gmt_modified', datetime.now()), ('update_by', WebContext().uid())]
+        sets += [('update_at', datetime.now()), ('update_by', WebContext().uid())]
         conditions += [('deleted', 0)]
         sql = f'UPDATE {self.table} SET '
         sql += ', '.join([f'{col} = {self.placeholder}' for col, val in sets])

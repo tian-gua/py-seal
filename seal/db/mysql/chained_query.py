@@ -1,19 +1,22 @@
 from datetime import datetime
-from ...context import PageContext, WebContext
+from ...context import WebContext
 from .mysql_connector import MysqlConnector
+from ...model import PageResult, BaseEntity
 
 
 class ChainedQuery:
     def __init__(self, clz, table: str = None, logic_delete_col: str = None):
         self.clz = clz
         self.table = table if table is not None else self.clz.table_name()
+        self.__conn = MysqlConnector().get_connection()
         self.__conditions = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
         self.__select_cols = ()
         self.__sets = {}
-        self.__page = ()
-        self.__conn = MysqlConnector().get_connection()
         self.__raw = ""
         self.placeholder = '%s'
+
+    def __get_cursor(self):
+        return self.__conn.cursor()
 
     def __cols(self):
         if len(self.__select_cols) == 0:
@@ -30,11 +33,6 @@ class ChainedQuery:
             return ()
         return tuple([cond[1] for cond in self.__conditions])
 
-    def __limit(self):
-        if len(self.__page) == 0:
-            return ''
-        return f'limit {self.__page[1]} offset {(self.__page[0] - 1) * self.__page[1]}'
-
     def raw(self, raw_sql: str):
         self.__raw = raw_sql
         return self
@@ -45,10 +43,6 @@ class ChainedQuery:
 
     def set(self, **sets):
         self.__sets = sets
-        return self
-
-    def page(self, page, page_size):
-        self.__page = (page, page_size)
         return self
 
     def eq(self, col, value):
@@ -84,9 +78,9 @@ class ChainedQuery:
         return self
 
     def count(self):
-        c = self.__conn.cursor()
+        c = self.__get_cursor()
         try:
-            sql = f'SELECT count(1) FROM {self.clz.table_name()} {self.__where()}'
+            sql = f'SELECT count(1) FROM {self.table} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
             affected = c.execute(sql, self.__args())
@@ -97,14 +91,11 @@ class ChainedQuery:
             self.__conn.close()
 
     def list(self):
-        c = self.__conn.cursor()
+        c = self.__get_cursor()
         try:
-            sql = f'SELECT {self.__cols()} FROM {self.clz.table_name()} {self.__where()} {self.__limit()}'
+            sql = f'SELECT {self.__cols()} FROM {self.table} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
-            if len(self.__page) > 0:
-                print(f'#### page: {self.__page[0]}, {self.__page[1]}')
-                PageContext().set(self.__page[0], self.__page[1], self.count())
             affected = c.execute(sql, self.__args())
             print(f'#### affected rows: {affected}')
             rows = c.fetchall()
@@ -116,10 +107,29 @@ class ChainedQuery:
         finally:
             self.__conn.close()
 
-    def first(self):
-        c = self.__conn.cursor()
+    def page(self, page: int = 1, page_size: int = 10):
+        c = self.__get_cursor()
         try:
-            sql = f'SELECT {self.__cols()} FROM {self.clz.table_name()} {self.__where()}'
+            limit = f'limit {page_size} offset {(page - 1) * page_size}'
+            sql = f'SELECT {self.__cols()} FROM {self.table} {self.__where()} {limit}'
+            print(f'#### sql: {sql}')
+            print(f'#### args: {self.__args()}')
+            affected = c.execute(sql, self.__args())
+            print(f'#### affected rows: {affected}')
+            rows = c.fetchall()
+            entities = []
+            for row in rows:
+                entities.append(self.clz(**{col: row[i] for i, col in enumerate(
+                    self.clz.columns() if len(self.__select_cols) == 0 else self.__select_cols)}))
+            page_result = PageResult(page, page_size, self.count(), entities)
+            return page_result
+        finally:
+            self.__conn.close()
+
+    def first(self):
+        c = self.__get_cursor()
+        try:
+            sql = f'SELECT {self.__cols()} FROM {self.table} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
             affected = c.execute(sql, self.__args())
@@ -132,16 +142,16 @@ class ChainedQuery:
             self.__conn.close()
 
     def update(self):
-        self.__sets['gmt_modified'] = datetime.now()
         self.__sets['update_by'] = WebContext().uid()
-        c = self.__conn.cursor()
+        self.__sets['update_at'] = datetime.now()
+        c = self.__get_cursor()
         try:
             if self.__sets is None or len(self.__sets.keys()) == 0:
                 raise Exception('update set is required')
             if self.__conditions is None or self.__where() == '':
                 raise Exception('update condition is required')
 
-            sql = f'UPDATE {self.clz.table_name()} SET {", ".join([f"{col} = {self.placeholder}" for col in self.__sets.keys()])} {self.__where()}'
+            sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.__sets.keys()])} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {tuple(self.__sets.values()) + self.__args()}')
             affected = c.execute(sql, tuple(self.__sets.values()) + self.__args())
@@ -150,13 +160,30 @@ class ChainedQuery:
         finally:
             self.__conn.close()
 
+    def update_entity(self, entity: BaseEntity):
+        entity.update_by = WebContext().uid()
+        entity.update_at = datetime.now()
+        c = self.__get_cursor()
+        try:
+
+            update_cols = [f'{col} = {self.placeholder}' for col in self.clz.columns(exclude=["id"])]
+            sql = f'UPDATE {self.table} SET {", ".join(update_cols)} where id = {self.placeholder}'
+            print(f'#### sql: {sql}')
+            args = tuple([getattr(entity, col) for col in self.clz.columns(exclude=["id"])] + [entity.id])
+            print(f'#### args: {args}')
+            affected = c.execute(sql, args)
+            print(f'#### affected rows: {affected}')
+            self.__conn.commit()
+        finally:
+            self.__conn.close()
+
     def delete(self):
-        c = self.__conn.cursor()
+        c = self.__get_cursor()
         try:
             if self.__conditions is None or self.__where() == '':
                 raise Exception('delete condition is required')
 
-            sql = f'DELETE FROM {self.clz.table_name()} {self.__where()}'
+            sql = f'DELETE FROM {self.table} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
             affected = c.execute(sql, self.__args())
@@ -170,13 +197,11 @@ class ChainedQuery:
         self.update()
 
     def mapping(self):
-        c = self.__conn.cursor()
+        c = self.__get_cursor()
         try:
-            sql = f'{self.__raw} {self.__where()} {self.__limit()}'
+            sql = f'{self.__raw} {self.__where()}'
             print(f'#### sql: {sql}')
             print(f'#### args: {self.__args()}')
-            if len(self.__page) > 0:
-                print(f'#### page: {self.__page[0]}, {self.__page[1]}')
             affected = c.execute(sql, self.__args())
             print(f'#### affected rows: {affected}')
             rows = c.fetchall()

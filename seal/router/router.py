@@ -11,7 +11,7 @@ from .. import get_seal
 
 
 async def verify_token(request: Request = Request):
-    if request.method == 'OPTIONS' or request.url.path in ['/login/submit']:
+    if request.method == 'OPTIONS' or request.url.path in get_seal().get_config('authorization-excludes'):
         return None
     try:
         payload = jwt.decode(request.headers['Authorization'],
