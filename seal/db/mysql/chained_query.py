@@ -29,7 +29,7 @@ class ChainedQuery(BaseChainedQuery):
         try:
             sql, args = self.select_statement()
             c.execute(sql, args)
-            return self.__fetchall(c)
+            return self.fetchall(c)
         except Exception as e:
             print(f'数据库操作异常: {e}')
         finally:
@@ -42,7 +42,7 @@ class ChainedQuery(BaseChainedQuery):
         try:
             sql, args = self.page_statement(page, page_size)
             c.execute(sql, args)
-            entities = self.__fetchall(c)
+            entities = self.fetchall(c)
             total = self.count(reuse_conn=True)
             return PageResult(page=page, page_size=page_size, total=total, data=entities)
         except Exception as e:
@@ -73,7 +73,7 @@ class ChainedQuery(BaseChainedQuery):
         try:
             sql, args = self.mapping_statement()
             c.execute(sql, args)
-            return self.__fetchall(c)
+            return self.fetchall(c)
         except Exception as e:
             print(f'数据库操作异常: {e}')
         finally:

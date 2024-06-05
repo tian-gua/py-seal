@@ -116,7 +116,7 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         print(f'#### args: {args}')
         return sql, args
 
-    def __fetchall(self, cursor) -> list:
+    def fetchall(self, cursor) -> list:
         rows = cursor.fetchall()
         entities = []
         for row in rows:

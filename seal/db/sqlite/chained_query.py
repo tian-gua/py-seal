@@ -32,7 +32,7 @@ class ChainedQuery(BaseChainedQuery):
             if result is None:
                 return []
 
-            return self.__fetchall(result)
+            return self.fetchall(result)
         except Exception as e:
             print(f'数据库操作异常: {e}')
         finally:
@@ -47,7 +47,7 @@ class ChainedQuery(BaseChainedQuery):
             result = c.execute(sql, args)
             if result is None:
                 return PageResult(page=page, page_size=page_size, total=0, data=[])
-            entities = self.__fetchall(result)
+            entities = self.fetchall(result)
             total = self.count(reuse_conn=True)
             return PageResult(page=page, page_size=page_size, total=total, data=entities)
         except Exception as e:
@@ -82,7 +82,7 @@ class ChainedQuery(BaseChainedQuery):
             result = c.execute(sql, args)
             if result is None:
                 return []
-            return self.__fetchall(result)
+            return self.fetchall(result)
         except Exception as e:
             print(f'数据库操作异常: {e}')
         finally:
