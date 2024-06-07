@@ -49,8 +49,7 @@ class ChainedUpdate(BaseChainedUpdate):
         c = self.__get_cursor()
         try:
             sql, args = self.delete_statement()
-            affected = c.execute(sql, self.__args())
-            print(f'#### affected: {affected}')
+            c.execute(sql, args)
             self.__conn.commit()
         except Exception as e:
             print(f'数据库操作异常: {e}')

@@ -47,10 +47,8 @@ class ChainedUpdate(BaseChainedUpdate):
     def delete(self, reuse_conn: bool = False):
         c = self.__get_cursor()
         try:
-            if self.__conditions is None or self.__where() == '':
-                raise Exception('conditions is required')
             sql, args = self.delete_statement()
-            c.execute(sql, self.__args())
+            c.execute(sql, args)
             self.__conn.commit()
         except Exception as e:
             print(f'数据库操作异常: {e}')
