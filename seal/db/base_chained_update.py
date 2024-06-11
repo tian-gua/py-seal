@@ -83,7 +83,9 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         if self.__conditions is None or self.__where() == '':
             raise Exception('update condition is required')
 
-        self.__sets['update_by'] = WebContext().uid()
+        update_by = WebContext().uid()
+        if update_by is not None:
+            self.__sets['update_by'] = WebContext().uid()
         self.__sets['update_at'] = datetime.now()
         sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.__sets.keys()])} {self.__where()}'
         args = tuple(self.__sets.values()) + self.__args()

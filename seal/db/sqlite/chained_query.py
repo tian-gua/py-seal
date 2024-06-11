@@ -67,7 +67,10 @@ class ChainedQuery(BaseChainedQuery):
             row = result.fetchone()
             if row is None:
                 return None
-            return self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())})
+            if self.is_dynamic:
+                return {field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)}
+            else:
+                return self.clz(**{col: row[i] for i, col in enumerate(self.columns())})
         except Exception as e:
             print(f'数据库操作异常: {e}')
         finally:
