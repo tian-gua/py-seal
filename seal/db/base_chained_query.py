@@ -3,7 +3,7 @@ import abc
 
 class BaseChainedQuery(metaclass=abc.ABCMeta):
 
-    def __init__(self, clz, placeholder, table: str = None, logic_delete_col: str = None):
+    def __init__(self, clz=None, placeholder=None, table: str = None, logic_delete_col: str = None):
         self.clz = clz
         self.table = table if table is not None else self.clz.table_name()
         self.__conditions: list[tuple] = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
@@ -136,3 +136,12 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
                 entities.append(self.clz(**{col: row[i] for i, col in enumerate(
                     self.clz.columns() if len(self.__select_cols) == 0 else self.__select_cols)}))
         return entities
+
+    def fetchone(self, cursor):
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        if self.is_dynamic:
+            return {field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)}
+        else:
+            return self.clz(**{col: row[i] for i, col in enumerate(self.columns())})

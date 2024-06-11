@@ -103,7 +103,7 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         print(f'#### args: {args}')
         return sql, args
 
-    def insert_statement(self, entity: BaseEntity) -> tuple[str, tuple]:
+    def insert_entity_statement(self, entity: BaseEntity) -> tuple[str, tuple]:
         now = datetime.now()
         entity.deleted = 0
         entity.create_by = WebContext().uid()

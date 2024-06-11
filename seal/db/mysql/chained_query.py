@@ -4,8 +4,10 @@ from ...model import PageResult
 
 
 class ChainedQuery(BaseChainedQuery):
-    def __init__(self, clz, table: str = None, logic_delete_col: str = None):
-        super().__init__(clz, '%s', table, logic_delete_col)
+    def __init__(self, clz=None, table: str = None, logic_delete_col: str = None):
+        if clz is None and table is None:
+            raise ValueError('clz和table不能同时为空')
+        super().__init__(clz=clz, placeholder='?', table=table, logic_delete_col=logic_delete_col)
         self.__conn = MysqlConnector().get_connection()
 
     def __get_cursor(self):
@@ -57,7 +59,7 @@ class ChainedQuery(BaseChainedQuery):
         try:
             sql, args = self.select_statement()
             c.execute(sql, args)
-            row = c.fetchone()
+            row = self.fetchone(c)
             if row is None:
                 return None
             return self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())})
