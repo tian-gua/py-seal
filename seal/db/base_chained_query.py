@@ -3,6 +3,10 @@ import abc
 
 class BaseChainedQuery(metaclass=abc.ABCMeta):
 
+    @abc.abstractmethod
+    def meta(self):
+        ...
+
     def __init__(self, clz=None, placeholder=None, table: str = None, logic_delete_col: str = None):
         self.clz = clz
         self.table = table if table is not None else self.clz.table_name()
@@ -12,10 +16,10 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         self.__ignore_cols = ()
         self.__raw = ""
         self.placeholder = placeholder
-        if self.clz.dynamic == 'sqlite':
+
+        if clz is None:
             self.is_dynamic = True
-            from seal.db.sqlite.meta import Meta
-            self.table_info = Meta.get_table_info(self.table)
+            self.table_info = self.meta().get_table_info(self.table)
         else:
             self.is_dynamic = False
 

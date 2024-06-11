@@ -1,7 +1,7 @@
 from datetime import datetime
-from seal.db.sqlite import SqliteConnector
-from seal.db.table_info import TableInfo
-from seal.cache import Cache
+from .sqlite_connector import SqliteConnector
+from ..table_info import TableInfo
+from ...cache import Cache
 
 
 class Meta:

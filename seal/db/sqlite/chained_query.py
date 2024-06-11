@@ -1,9 +1,14 @@
-from ..base_chained_query import BaseChainedQuery
 from .sqlite_connector import SqliteConnector
+from .meta import Meta
+from ..base_chained_query import BaseChainedQuery
 from ...model import PageResult
 
 
 class ChainedQuery(BaseChainedQuery):
+
+    def meta(self):
+        return Meta
+
     def __init__(self, clz=None, table: str = None, logic_delete_col: str = None):
         if clz is None and table is None:
             raise ValueError('clz和table不能同时为空')
