@@ -1,13 +1,17 @@
-from ..base_chained_query import BaseChainedQuery
+from .meta import Meta
 from .mysql_connector import MysqlConnector
+from ..base_chained_query import BaseChainedQuery
 from ...model import PageResult
 
 
 class ChainedQuery(BaseChainedQuery):
+    def meta(self):
+        return Meta
+
     def __init__(self, clz=None, table: str = None, logic_delete_col: str = None):
         if clz is None and table is None:
             raise ValueError('clz和table不能同时为空')
-        super().__init__(clz=clz, placeholder='?', table=table, logic_delete_col=logic_delete_col)
+        super().__init__(clz=clz, placeholder='%s', table=table, logic_delete_col=logic_delete_col)
         self.__conn = MysqlConnector().get_connection()
 
     def __get_cursor(self):
@@ -59,10 +63,7 @@ class ChainedQuery(BaseChainedQuery):
         try:
             sql, args = self.select_statement()
             c.execute(sql, args)
-            row = self.fetchone(c)
-            if row is None:
-                return None
-            return self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())})
+            return self.fetchone(c)
         except Exception as e:
             print(f'数据库操作异常: {e}')
         finally:
