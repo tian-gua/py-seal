@@ -20,7 +20,7 @@ class ChainedUpdate(BaseChainedUpdate):
     def insert(self, entity: BaseEntity, reuse_conn: bool = False):
         c = self.__get_cursor()
         try:
-            sql, args = self.insert_statement(entity)
+            sql, args = self.insert_entity_statement(entity)
             affected = c.execute(sql, args)
             print(f'#### affected: {affected}')
             self.__conn.commit()
@@ -49,7 +49,8 @@ class ChainedUpdate(BaseChainedUpdate):
         c = self.__get_cursor()
         try:
             sql, args = self.delete_statement()
-            c.execute(sql, args)
+            affected = c.execute(sql, args)
+            print(f'#### affected: {affected}')
             self.__conn.commit()
         except Exception as e:
             print(f'数据库操作异常: {e}')

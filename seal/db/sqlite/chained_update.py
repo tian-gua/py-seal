@@ -20,7 +20,7 @@ class ChainedUpdate(BaseChainedUpdate):
     def insert(self, entity: BaseEntity, reuse_conn: bool = False):
         c = self.__get_cursor()
         try:
-            sql, args = self.insert_statement(entity)
+            sql, args = self.insert_entity_statement(entity)
             c.execute(sql, args)
             self.__conn.commit()
         except Exception as e:

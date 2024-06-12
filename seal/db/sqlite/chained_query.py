@@ -1,11 +1,18 @@
-from ..base_chained_query import BaseChainedQuery
 from .sqlite_connector import SqliteConnector
+from .meta import Meta
+from ..base_chained_query import BaseChainedQuery
 from ...model import PageResult
 
 
 class ChainedQuery(BaseChainedQuery):
-    def __init__(self, clz, table: str = None, logic_delete_col: str = None):
-        super().__init__(clz, '?', table, logic_delete_col)
+
+    def meta(self):
+        return Meta
+
+    def __init__(self, clz=None, table: str = None, logic_delete_col: str = None):
+        if clz is None and table is None:
+            raise ValueError('clz和table不能同时为空')
+        super().__init__(clz=clz, placeholder='?', table=table, logic_delete_col=logic_delete_col)
         self.__conn = SqliteConnector().get_connection()
 
     def __get_cursor(self):
@@ -64,10 +71,7 @@ class ChainedQuery(BaseChainedQuery):
             result = c.execute(sql, args)
             if result is None:
                 return None
-            row = result.fetchone()
-            if row is None:
-                return None
-            return self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())})
+            return self.fetchone(result)
         except Exception as e:
             print(f'数据库操作异常: {e}')
         finally:
