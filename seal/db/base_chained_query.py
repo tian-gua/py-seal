@@ -137,10 +137,15 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         entities = []
         for row in rows:
             if self.is_dynamic:
-                entities.append({field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)})
+                if type(row) is dict:
+                    entities.append(row)
+                else:
+                    entities.append({field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)})
             else:
-                entities.append(self.clz(**{col: row[i] for i, col in enumerate(
-                    self.clz.columns() if len(self.__select_cols) == 0 else self.__select_cols)}))
+                if type(row) is dict:
+                    entities.append(self.clz(**row))
+                else:
+                    entities.append(self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())}))
         return entities
 
     def fetchone(self, cursor):
@@ -148,6 +153,12 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         if row is None:
             return None
         if self.is_dynamic:
-            return {field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)}
+            if type(row) is dict:
+                return row
+            else:
+                return {field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)}
         else:
-            return self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())})
+            if type(row) is dict:
+                return self.clz(**row)
+            else:
+                return self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())})
