@@ -25,10 +25,13 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
 
     def columns(self):
         if self.is_dynamic:
-            return ', '.join([key for key, db_type in self.table_info.columns])
+            return [key for key, db_type in self.table_info.columns]
         if len(self.__select_cols) == 0:
-            return ', '.join([col if col not in self.ignore_cols else '' for col in self.clz.columns()])
-        return ', '.join(self.__select_cols)
+            return [col if col not in self.ignore_cols else '' for col in self.clz.columns()]
+        return self.__select_cols
+
+    def select_cols(self):
+        return ', '.join(self.columns())
 
     def __args(self):
         if len(self.__conditions) == 0:
@@ -106,7 +109,7 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
     def select_statement(self) -> tuple[str, tuple]:
         order_by = ', '.join(f'{sort[0]} {sort[1]}' for sort in self.__order_by)
         order_by = '' if len(self.__order_by) == 0 else f'order by {order_by}'
-        sql = f'SELECT {self.columns()} FROM {self.table} {self.__where()} {order_by}'
+        sql = f'SELECT {self.select_cols()} FROM {self.table} {self.__where()} {order_by}'
         args = self.__args()
         print(f'#### sql: {sql}')
         print(f'#### args: {args}')
@@ -116,7 +119,7 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         limit = f'limit {page_size} offset {(page - 1) * page_size}'
         order_by = ', '.join(f'{sort[0]} {sort[1]}' for sort in self.__order_by)
         order_by = '' if len(self.__order_by) == 0 else f'order by {order_by}'
-        sql = f'SELECT {self.columns()} FROM {self.table} {self.__where()} {order_by} {limit}'
+        sql = f'SELECT {self.select_cols()} FROM {self.table} {self.__where()} {order_by} {limit}'
         args = self.__args()
         print(f'#### sql: {sql}')
         print(f'#### args: {args}')
@@ -147,4 +150,4 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         if self.is_dynamic:
             return {field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)}
         else:
-            return self.clz(**{col: row[i] for i, col in enumerate(self.columns())})
+            return self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())})
