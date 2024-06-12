@@ -13,7 +13,7 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         self.__conditions: list[tuple] = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
         self.__select_cols = ()
         self.__order_by = ()
-        self.__ignore_cols = ()
+        self.ignore_cols = ()
         self.__raw = ""
         self.placeholder = placeholder
 
@@ -27,8 +27,7 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         if self.is_dynamic:
             return ', '.join([key for key, db_type in self.table_info.columns])
         if len(self.__select_cols) == 0:
-            return ', '.join([col in self.clz.columns() if col not in self.__ignore_cols else '' for col in
-                              self.clz.columns()])
+            return ', '.join([col if col not in self.ignore_cols else '' for col in self.clz.columns()])
         return ', '.join(self.__select_cols)
 
     def __args(self):
@@ -50,7 +49,7 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         return self
 
     def ignore(self, *cols):
-        self.__ignore_cols = cols
+        self.ignore_cols = cols
         return self
 
     def eq(self, col, value):
