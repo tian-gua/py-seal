@@ -7,11 +7,14 @@ from ..wrapper import singleton
 class Configuration:
 
     def __init__(self):
-        self.__config = {}
+        self.config_dict = {}
 
     def load(self, path: str):
         with open(path, 'r') as f:
-            self.__config = yaml.load(f, Loader=yaml.FullLoader)
+            self.config_dict = yaml.load(f, Loader=yaml.FullLoader)
 
-    def get_config(self, key: str):
-        return self.__config.__getitem__('seal').__getitem__(key)
+    def get_conf(self, *keys):
+        conf = self.config_dict
+        for key in keys:
+            conf = conf.get(key)
+        return conf

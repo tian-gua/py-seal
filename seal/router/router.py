@@ -1,21 +1,28 @@
 import time
+import re
 from functools import wraps
-
 import jwt
 from fastapi import FastAPI, Request, Response, HTTPException, Depends
 from starlette.middleware.cors import CORSMiddleware
 from ..context import WebContext
 from ..model import Response as ResponseModel
 from ..exception import BusinessException
-from .. import get_seal
+from .. import get_config
 
 
 async def verify_token(request: Request = Request):
-    if request.method == 'OPTIONS' or request.url.path in get_seal().get_config('authorization-excludes'):
+    if request.method == 'OPTIONS':
         return None
+    path = request.url.path
+    urls = get_config('seal', 'authorization', 'excludes')
+    for url in urls:
+        # * -> [a-zA-Z0-9_\-]*, ** -> .*
+        url = url.replace('*', '[a-zA-Z0-9_\-]*').replace('**', '.*')
+        if re.match(url, path):
+            return None
     try:
         payload = jwt.decode(request.headers['Authorization'],
-                             get_seal().get_config('jwt_key'),
+                             get_config('seal', 'authorization', 'jwt_key'),
                              algorithms=["HS256"])
         WebContext().set({'uid': payload['uid']})
     except Exception as e:
