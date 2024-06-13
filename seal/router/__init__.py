@@ -1,2 +1,2 @@
-from .router import get, post, put, delete
-from .router import app
+from .router import app, get, post, put, delete
+from .jwt import generate_token
