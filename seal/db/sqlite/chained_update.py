@@ -1,11 +1,17 @@
+from . import Meta
 from ..base_chained_update import BaseChainedUpdate
 from .sqlite_connector import SqliteConnector
 from ...context import WebContext
 from ...model import BaseEntity
+from ...utils.tranform_utils import transform_nan
 from datetime import datetime
 
 
 class ChainedUpdate(BaseChainedUpdate):
+
+    def meta(self):
+        return Meta
+
     def __init__(self, clz=None, table: str = None, logic_delete_col: str = None):
         super().__init__(clz, '?', table, logic_delete_col)
         self.__conn = SqliteConnector().get_connection()
@@ -17,13 +23,13 @@ class ChainedUpdate(BaseChainedUpdate):
         self.sets['deleted'] = 1
         self.update()
 
-    def insert(self, entity: BaseEntity = None, data: dict = None, reuse_conn: bool = False):
+    def insert(self, entity: BaseEntity = None, data: dict = None, duplicated_ignore=False, reuse_conn: bool = False):
         c = self.__get_cursor()
         try:
             if entity is not None:
-                sql, args = self.insert_statement(entity=entity)
+                sql, args = self.insert_statement(entity=entity, duplicated_ignore=duplicated_ignore)
             elif data is not None:
-                sql, args = self.insert_statement(data=data)
+                sql, args = self.insert_statement(data=data, duplicated_ignore=duplicated_ignore)
             else:
                 raise ValueError('null data')
             c.execute(sql, args)
@@ -58,7 +64,7 @@ class ChainedUpdate(BaseChainedUpdate):
                     data['deleted'] = 0
                     data['create_by'] = WebContext().uid()
                     data['create_at'] = now
-                    args = [data[col] for col in self.clz.columns(exclude=["id"])]
+                    args = [transform_nan(data[col]) for col in self.clz.columns(exclude=["id"])]
                     print(f'#### args: {args}')
                     c.execute(sql, tuple(args))
             self.__conn.commit()

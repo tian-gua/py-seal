@@ -134,7 +134,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         print(f'#### args: {args}')
         return sql, args
 
-    def insert_statement(self, entity: BaseEntity = None, data: dict = None) -> tuple[str, tuple]:
+    def insert_statement(self, entity: BaseEntity = None, data: dict = None, duplicated_ignore=False,
+                         duplicated_key_update=False) -> tuple[str, tuple]:
         if entity is None and data is None:
             raise ValueError('null data')
 
@@ -151,12 +152,20 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
 
         cols = ', '.join(self.columns(exclude=["id"]))
         placeholders = ', '.join([self.placeholder for col in self.columns(exclude=["id"])])
-        sql = f'INSERT INTO {self.table} ({cols}) VALUES ({placeholders})'
+
+        sql = f'INSERT {"OR IGNORE" if duplicated_ignore else ""} INTO {self.table} ({cols}) VALUES ({placeholders})'
+        if duplicated_key_update:
+            sql += f'{" ON DUPLICATE KEY UPDATE" if duplicated_key_update else ""}'
+            sql += ', '.join([f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])])
 
         if entity is not None:
             args = tuple([getattr(entity, col) for col in self.columns(exclude=["id"])])
+            if duplicated_key_update:
+                args += args
         else:
             args = tuple([data[col] for col in self.columns(exclude=["id"])])
+            if duplicated_key_update:
+                args += args
         print(f'#### sql: {sql}')
         print(f'#### args: {args}')
         return sql, args
@@ -166,7 +175,7 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         placeholders = ', '.join([self.placeholder for _ in self.columns(exclude=["id"])])
         sql = f'INSERT {"OR IGNORE" if duplicated_ignore else ""} INTO {self.table} ({cols}) VALUES ({placeholders})'
         if duplicated_key_update:
-            sql += f'{" ON DUPLICATE KEY UPDATE" if duplicated_key_update else ""}'
+            sql += f'{" ON DUPLICATE KEY UPDATE " if duplicated_key_update else ""}'
             sql += ', '.join([f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])])
         print(f'#### sql: {sql}')
         return sql
