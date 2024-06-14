@@ -21,7 +21,11 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
             self.is_dynamic = True
             self.table_info = self.meta().get_table_info(self.table)
         else:
-            self.is_dynamic = False
+            if clz.dynamic:
+                self.is_dynamic = True
+                self.table_info = self.meta().get_table_info(self.table)
+            else:
+                self.is_dynamic = False
 
     def columns(self):
         if self.is_dynamic:
