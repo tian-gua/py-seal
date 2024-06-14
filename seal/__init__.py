@@ -3,7 +3,7 @@ from .wrapper import singleton
 
 __author__ = 'melon'
 __email__ = '77729052@qq.com'
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 
 @singleton
