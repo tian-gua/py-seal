@@ -6,12 +6,31 @@ from ..context import WebContext
 
 class BaseChainedUpdate(metaclass=abc.ABCMeta):
 
+    @abc.abstractmethod
+    def meta(self):
+        ...
+
     def __init__(self, clz, placeholder, table: str = None, logic_delete_col: str = None):
         self.clz = clz
         self.table = table if table is not None else self.clz.table_name()
         self.__conditions: list[tuple] = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
-        self.__sets = {}
+        self.sets = {}
         self.placeholder = placeholder
+
+        if clz is None:
+            self.is_dynamic = True
+            self.table_info = self.meta().get_table_info(self.table)
+        else:
+            if clz.dynamic:
+                self.is_dynamic = True
+                self.table_info = self.meta().get_table_info(self.table)
+            else:
+                self.is_dynamic = False
+
+    def columns(self, exclude=None):
+        if self.is_dynamic:
+            return [key for key, db_type in self.table_info.columns if key not in exclude]
+        return [col for col in self.clz.columns() if col not in exclude]
 
     def __args(self):
         if len(self.__conditions) == 0:
@@ -64,7 +83,7 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         return self
 
     def set(self, **sets):
-        self.__sets = sets
+        self.sets = sets
         return self
 
     def delete_statement(self) -> tuple[str, tuple]:
@@ -78,48 +97,76 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         return sql, args
 
     def update_statement(self) -> tuple[str, tuple]:
-        if self.__sets is None or len(self.__sets.keys()) == 0:
+        if self.sets is None or len(self.sets.keys()) == 0:
             raise Exception('update set is required')
         if self.__conditions is None or self.__where() == '':
             raise Exception('update condition is required')
 
         update_by = WebContext().uid()
         if update_by is not None:
-            self.__sets['update_by'] = WebContext().uid()
-        self.__sets['update_at'] = datetime.now()
-        sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.__sets.keys()])} {self.__where()}'
-        args = tuple(self.__sets.values()) + self.__args()
+            self.sets['update_by'] = WebContext().uid()
+        self.sets['update_at'] = datetime.now()
+        sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.sets.keys()])} {self.__where()}'
+        args = tuple(self.sets.values()) + self.__args()
         print(f'#### sql: {sql}')
         print(f'#### args: {args}')
         return sql, args
 
-    def update_entity_statement(self, entity: BaseEntity) -> tuple[str, tuple]:
-        entity.update_by = WebContext().uid()
-        entity.update_at = datetime.now()
-        update_cols = [f'{col} = {self.placeholder}' for col in self.clz.columns(exclude=["id"])]
+    def update_by_pk_statement(self, entity: BaseEntity = None, data: dict = None) -> tuple[str, tuple]:
+        if entity is None and data is None:
+            raise ValueError('null data')
+
+        if entity is not None:
+            entity.update_by = WebContext().uid()
+            entity.update_at = datetime.now()
+        else:
+            data['update_by'] = WebContext().uid()
+            data['update_at'] = datetime.now()
+
+        update_cols = [f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])]
         sql = f'UPDATE {self.table} SET {", ".join(update_cols)} where id = {self.placeholder}'
-        args = tuple([getattr(entity, col) for col in self.clz.columns(exclude=["id"])] + [entity.id])
+
+        if entity is not None:
+            args = tuple([getattr(entity, col) for col in self.columns(exclude=["id"])] + [entity.id])
+        else:
+            args = tuple([data[col] for col in self.columns(exclude=["id"])] + [data['id']])
         print(f'#### sql: {sql}')
         print(f'#### args: {args}')
         return sql, args
 
-    def insert_entity_statement(self, entity: BaseEntity) -> tuple[str, tuple]:
-        now = datetime.now()
-        entity.deleted = 0
-        entity.create_by = WebContext().uid()
-        entity.create_at = now
+    def insert_statement(self, entity: BaseEntity = None, data: dict = None) -> tuple[str, tuple]:
+        if entity is None and data is None:
+            raise ValueError('null data')
 
-        cols = ', '.join(self.clz.columns(exclude=["id"]))
-        placeholders = ', '.join([self.placeholder for _ in self.clz.columns(exclude=["id"])])
+        if entity is not None:
+            now = datetime.now()
+            entity.deleted = 0
+            entity.create_by = WebContext().uid()
+            entity.create_at = now
+        else:
+            now = datetime.now()
+            data['deleted'] = 0
+            data['create_by'] = WebContext().uid()
+            data['create_at'] = now
+
+        cols = ', '.join(self.columns(exclude=["id"]))
+        placeholders = ', '.join([self.placeholder for col in self.columns(exclude=["id"])])
         sql = f'INSERT INTO {self.table} ({cols}) VALUES ({placeholders})'
-        args = tuple([getattr(entity, col) for col in self.clz.columns(exclude=["id"])])
+
+        if entity is not None:
+            args = tuple([getattr(entity, col) for col in self.columns(exclude=["id"])])
+        else:
+            args = tuple([data[col] for col in self.columns(exclude=["id"])])
         print(f'#### sql: {sql}')
         print(f'#### args: {args}')
         return sql, args
 
-    def insert_bulk_statement(self, duplicated_ignore=False) -> str:
-        cols = ', '.join(self.clz.columns(exclude=["id"]))
-        placeholders = ', '.join([self.placeholder for _ in self.clz.columns(exclude=["id"])])
+    def insert_bulk_statement(self, duplicated_ignore=False, duplicated_key_update=False) -> str:
+        cols = ', '.join(self.columns(exclude=["id"]))
+        placeholders = ', '.join([self.placeholder for _ in self.columns(exclude=["id"])])
         sql = f'INSERT {"OR IGNORE" if duplicated_ignore else ""} INTO {self.table} ({cols}) VALUES ({placeholders})'
+        if duplicated_key_update:
+            sql += f'{" ON DUPLICATE KEY UPDATE" if duplicated_key_update else ""}'
+            sql += ', '.join([f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])])
         print(f'#### sql: {sql}')
         return sql
