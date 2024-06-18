@@ -2,6 +2,7 @@ import abc
 from datetime import datetime
 from ..model import BaseEntity
 from ..context import WebContext
+from loguru import logger
 
 
 class BaseChainedUpdate(metaclass=abc.ABCMeta):
@@ -92,8 +93,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
 
         sql = f'DELETE FROM {self.table} {self.__where()}'
         args = self.__args()
-        print(f'#### sql: {sql}')
-        print(f'#### args: {args}')
+        logger.info(f'#### sql: {sql}')
+        logger.info(f'#### args: {args}')
         return sql, args
 
     def update_statement(self) -> tuple[str, tuple]:
@@ -108,8 +109,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         self.sets['update_at'] = datetime.now()
         sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.sets.keys()])} {self.__where()}'
         args = tuple(self.sets.values()) + self.__args()
-        print(f'#### sql: {sql}')
-        print(f'#### args: {args}')
+        logger.info(f'#### sql: {sql}')
+        logger.info(f'#### args: {args}')
         return sql, args
 
     def update_by_pk_statement(self, entity: BaseEntity = None, data: dict = None) -> tuple[str, tuple]:
@@ -130,8 +131,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
             args = tuple([getattr(entity, col) for col in self.columns(exclude=["id"])] + [entity.id])
         else:
             args = tuple([data[col] for col in self.columns(exclude=["id"])] + [data['id']])
-        print(f'#### sql: {sql}')
-        print(f'#### args: {args}')
+        logger.info(f'#### sql: {sql}')
+        logger.info(f'#### args: {args}')
         return sql, args
 
     def insert_statement(self, entity: BaseEntity = None, data: dict = None, duplicated_ignore=False,
@@ -166,8 +167,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
             args = tuple([data[col] for col in self.columns(exclude=["id"])])
             if duplicated_key_update:
                 args += args
-        print(f'#### sql: {sql}')
-        print(f'#### args: {args}')
+        logger.info(f'#### sql: {sql}')
+        logger.info(f'#### args: {args}')
         return sql, args
 
     def insert_bulk_statement(self, duplicated_ignore=False, duplicated_key_update=False) -> str:
@@ -177,5 +178,5 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         if duplicated_key_update:
             sql += f'{" ON DUPLICATE KEY UPDATE " if duplicated_key_update else ""}'
             sql += ', '.join([f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])])
-        print(f'#### sql: {sql}')
+        logger.info(f'#### sql: {sql}')
         return sql

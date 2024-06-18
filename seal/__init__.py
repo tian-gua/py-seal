@@ -1,5 +1,6 @@
 from .config import Configuration
 from .wrapper import singleton
+from loguru import logger
 
 __author__ = 'melon'
 __email__ = '77729052@qq.com'
@@ -14,7 +15,7 @@ class Seal:
 
     def init(self, config_path):
         self.configuration.load(config_path)
-        print(f'初始化 seal({self}) 成功')
+        logger.info(f'初始化 seal({self}) 成功')
         return self
 
     def get_config(self, *keys):

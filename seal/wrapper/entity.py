@@ -1,4 +1,3 @@
-from pydantic import BaseModel, create_model
 from ..utils.str_utils import snake_case
 
 

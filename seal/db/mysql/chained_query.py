@@ -2,6 +2,7 @@ from .meta import Meta
 from .mysql_connector import MysqlConnector
 from ..base_chained_query import BaseChainedQuery
 from ...model import PageResult
+from loguru import logger
 
 
 class ChainedQuery(BaseChainedQuery):
@@ -24,7 +25,7 @@ class ChainedQuery(BaseChainedQuery):
             c.execute(sql, args)
             return c.fetchone()[0]
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -37,7 +38,7 @@ class ChainedQuery(BaseChainedQuery):
             c.execute(sql, args)
             return self.fetchall(c)
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -52,7 +53,7 @@ class ChainedQuery(BaseChainedQuery):
             total = self.count(reuse_conn=True)
             return PageResult(page=page, page_size=page_size, total=total, data=entities)
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -65,7 +66,7 @@ class ChainedQuery(BaseChainedQuery):
             c.execute(sql, args)
             return self.fetchone(c)
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -78,7 +79,7 @@ class ChainedQuery(BaseChainedQuery):
             c.execute(sql, args)
             return self.fetchall(c)
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:

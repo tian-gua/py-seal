@@ -1,11 +1,10 @@
-from . import Meta
+from .meta import Meta
 from ..base_chained_update import BaseChainedUpdate
 from .sqlite_connector import SqliteConnector
 from ...context import WebContext
 from ...model import BaseEntity
-from ...utils.tranform_utils import transform_nan
 from datetime import datetime
-
+from loguru import logger
 
 class ChainedUpdate(BaseChainedUpdate):
 
@@ -35,7 +34,7 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -56,7 +55,7 @@ class ChainedUpdate(BaseChainedUpdate):
                     entity.create_by = WebContext().uid()
                     entity.create_at = now
                     args = [getattr(entity, col) for col in self.columns(exclude=["id"])]
-                    print(f'#### args: {args}')
+                    logger.info(f'#### args: {args}')
                     c.execute(sql, tuple(args))
             elif data_list is not None:
                 for data in data_list:
@@ -64,12 +63,12 @@ class ChainedUpdate(BaseChainedUpdate):
                     data['deleted'] = 0
                     data['create_by'] = WebContext().uid()
                     data['create_at'] = now
-                    args = [transform_nan(data[col]) for col in self.clz.columns(exclude=["id"])]
-                    print(f'#### args: {args}')
+                    args = [data[col] for col in self.clz.columns(exclude=["id"])]
+                    logger.info(f'#### args: {args}')
                     c.execute(sql, tuple(args))
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -83,7 +82,7 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -96,7 +95,7 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -114,7 +113,7 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:

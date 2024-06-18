@@ -1,4 +1,5 @@
 import abc
+from loguru import logger
 
 
 class BaseChainedQuery(metaclass=abc.ABCMeta):
@@ -106,8 +107,8 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
     def count_statement(self) -> tuple[str, tuple]:
         sql = f'SELECT count(1) FROM {self.table} {self.__where()}'
         args = self.__args()
-        print(f'#### sql: {sql}')
-        print(f'#### args: {args}')
+        logger.info(f'#### sql: {sql}')
+        logger.info(f'#### args: {args}')
         return sql, args
 
     def select_statement(self) -> tuple[str, tuple]:
@@ -115,8 +116,8 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         order_by = '' if len(self.__order_by) == 0 else f'order by {order_by}'
         sql = f'SELECT {self.select_cols()} FROM {self.table} {self.__where()} {order_by}'
         args = self.__args()
-        print(f'#### sql: {sql}')
-        print(f'#### args: {args}')
+        logger.info(f'#### sql: {sql}')
+        logger.info(f'#### args: {args}')
         return sql, args
 
     def page_statement(self, page: int, page_size: int) -> tuple[str, tuple]:
@@ -125,15 +126,15 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         order_by = '' if len(self.__order_by) == 0 else f'order by {order_by}'
         sql = f'SELECT {self.select_cols()} FROM {self.table} {self.__where()} {order_by} {limit}'
         args = self.__args()
-        print(f'#### sql: {sql}')
-        print(f'#### args: {args}')
+        logger.info(f'#### sql: {sql}')
+        logger.info(f'#### args: {args}')
         return sql, args
 
     def mapping_statement(self) -> tuple[str, tuple]:
         sql = f'{self.__raw} {self.__where()}'
         args = self.__args()
-        print(f'#### sql: {sql}')
-        print(f'#### args: {args}')
+        logger.info(f'#### sql: {sql}')
+        logger.info(f'#### args: {args}')
         return sql, args
 
     def fetchall(self, cursor) -> list:
