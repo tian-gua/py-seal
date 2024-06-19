@@ -1,14 +1,14 @@
 from datetime import datetime
 from .mysql_connector import MysqlConnector
 from ..table_info import TableInfo
-from ...cache import Cache
+from ... import cache
 
 
 class Meta:
 
     @staticmethod
     def get_table_info(table: str) -> TableInfo:
-        table_info_cache = Cache().get(f'table_info_{table}')
+        table_info_cache = cache.get(f'table_info_{table}')
         if table_info_cache is not None:
             return table_info_cache
 
@@ -34,7 +34,7 @@ class Meta:
                     table_info.model_fields.append((field_name, datetime))
                 else:
                     table_info.model_fields.append((field_name, str))
-            Cache().set(f'table_info_{table}', table_info)
+            cache.set(f'table_info_{table}', table_info)
             return table_info
         finally:
             c.close()

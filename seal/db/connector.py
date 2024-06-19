@@ -1,7 +1,7 @@
 import abc
 
 
-class DBConnector(metaclass=abc.ABCMeta):
+class Connector(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_connection(self):
         pass

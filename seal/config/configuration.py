@@ -1,9 +1,6 @@
 import yaml
 
-from ..wrapper import singleton
 
-
-@singleton
 class Configuration:
 
     def __init__(self):

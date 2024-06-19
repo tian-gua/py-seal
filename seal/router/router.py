@@ -7,14 +7,15 @@ from starlette.middleware.cors import CORSMiddleware
 from ..context import WebContext
 from ..model import Response as ResponseModel
 from ..exception import BusinessException
-from .. import get_config
+from .. import seal
+from loguru import logger
 
 
 async def verify_token(request: Request = Request):
     if request.method == 'OPTIONS':
         return None
     path = request.url.path
-    urls = get_config('seal', 'authorization', 'excludes')
+    urls = seal.get_config('seal', 'authorization', 'excludes')
     for url in urls:
         # * -> [a-zA-Z0-9_\-]*, ** -> .*
         url = url.replace('*', '[a-zA-Z0-9_\-]*').replace('**', '.*')
@@ -22,7 +23,7 @@ async def verify_token(request: Request = Request):
             return None
     try:
         payload = jwt.decode(request.headers['Authorization'],
-                             get_config('seal', 'authorization', 'jwt_key'),
+                             seal.get_config('seal', 'authorization', 'jwt_key'),
                              algorithms=["HS256"])
         WebContext().set({'uid': payload['uid']})
     except Exception as e:
@@ -63,8 +64,10 @@ def response_body(func):
             result = await func(*args, **kwargs)
             return ResponseModel.build(result).success()
         except BusinessException as e:
+            logger.error(f'{e.message}')
             return ResponseModel.build().error(message=e.message, code=e.code)
         except Exception as e:
+            logger.error(f'{e}')
             return ResponseModel.build().error(message=str(e))
 
     return wrapper

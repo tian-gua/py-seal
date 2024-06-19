@@ -1,10 +1,10 @@
+from .mysql_connector import MysqlConnector
 from .meta import Meta
 from ..base_chained_update import BaseChainedUpdate
-from .mysql_connector import MysqlConnector
 from ...context import WebContext
 from ...model import BaseEntity
-from ...utils.tranform_utils import transform_nan
 from datetime import datetime
+from loguru import logger
 
 
 class ChainedUpdate(BaseChainedUpdate):
@@ -34,10 +34,10 @@ class ChainedUpdate(BaseChainedUpdate):
             else:
                 raise ValueError('null data')
             affected = c.execute(sql, args)
-            print(f'#### affected: {affected}')
+            logger.debug(f'#### affected: {affected}')
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -61,7 +61,7 @@ class ChainedUpdate(BaseChainedUpdate):
                     args = [getattr(entity, col) for col in self.columns(exclude=["id"])]
                     if duplicated_key_update:
                         args += args
-                    print(f'#### args: {args}')
+                    logger.debug(f'#### args: {args}')
                     affected = c.execute(sql, args)
                     total_affected += affected
             elif data_list is not None:
@@ -70,16 +70,16 @@ class ChainedUpdate(BaseChainedUpdate):
                     data['deleted'] = 0
                     data['create_by'] = WebContext().uid()
                     data['create_at'] = now
-                    args = [transform_nan(data[col]) for col in self.columns(exclude=["id"])]
+                    args = [data[col] for col in self.columns(exclude=["id"])]
                     if duplicated_key_update:
                         args += args
-                    print(f'#### args: {args}')
+                    logger.debug(f'#### args: {args}')
                     affected = c.execute(sql, args)
                     total_affected += affected
-            print(f'#### affected: {total_affected}')
+            logger.debug(f'#### affected: {total_affected}')
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -90,10 +90,10 @@ class ChainedUpdate(BaseChainedUpdate):
         try:
             sql, args = self.update_statement()
             affected = c.execute(sql, args)
-            print(f'#### affected: {affected}')
+            logger.debug(f'#### affected: {affected}')
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -104,10 +104,10 @@ class ChainedUpdate(BaseChainedUpdate):
         try:
             sql, args = self.delete_statement()
             affected = c.execute(sql, args)
-            print(f'#### affected: {affected}')
+            logger.debug(f'#### affected: {affected}')
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
@@ -124,10 +124,10 @@ class ChainedUpdate(BaseChainedUpdate):
                 raise ValueError('null data')
 
             affected = c.execute(sql, args)
-            print(f'#### affected: {affected}')
+            logger.debug(f'#### affected: {affected}')
             self.__conn.commit()
         except Exception as e:
-            print(f'数据库操作异常: {e}')
+            logger.error(f'数据库操作异常: {e}')
         finally:
             c.close()
             if reuse_conn is False:
