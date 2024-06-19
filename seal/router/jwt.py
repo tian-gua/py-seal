@@ -1,8 +1,12 @@
 import jwt
 from datetime import datetime, timedelta
-from .. import get_config
+from .. import seal
 
 
 def generate_token(**payloads):
-    payloads["exp"] = datetime.now() + timedelta(seconds=get_config('seal', 'authorization', 'expire'))
-    return jwt.encode(payloads, get_config("jwt_key"), algorithm="HS256")
+    try:
+        payloads["exp"] = datetime.now() + timedelta(seconds=seal.get_config('seal', 'authorization', 'expire'))
+        token = jwt.encode(payloads, seal.get_config('seal', 'authorization', 'jwt_key'), algorithm="HS256")
+    except Exception as e:
+        raise Exception(f"Token generation failed: {e}")
+    return token

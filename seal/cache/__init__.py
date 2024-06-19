@@ -1,1 +1,3 @@
-from .cache import Cache
+from .cache import Cache as _Cache
+
+cache = _Cache()

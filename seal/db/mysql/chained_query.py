@@ -1,5 +1,5 @@
-from .meta import Meta
 from .mysql_connector import MysqlConnector
+from .meta import Meta
 from ..base_chained_query import BaseChainedQuery
 from ...model import PageResult
 from loguru import logger

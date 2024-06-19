@@ -1,14 +1,14 @@
 import pymysql
 import pymysql.cursors
-from ..connector import DBConnector
+from ..connector import Connector
+from ... import seal
 from ...wrapper import singleton
-from ... import get_config
 
 
 @singleton
-class MysqlConnector(DBConnector):
+class MysqlConnector(Connector):
     def __init__(self):
-        self.config = get_config('seal', 'mysql')
+        self.config = seal.get_config('seal', 'mysql')
         # self.pool = mysql.connector.pooling.MySQLConnectionPool(**self.config)
 
     def get_connection(self):

@@ -1,7 +1,3 @@
-from ..wrapper.singleton import singleton
-
-
-@singleton
 class Cache:
     def __init__(self):
         self.__container = {}

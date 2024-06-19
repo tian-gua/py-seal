@@ -1,9 +1,8 @@
+from .mysql_connector import MysqlConnector
 from .meta import Meta
 from ..base_chained_update import BaseChainedUpdate
-from .mysql_connector import MysqlConnector
 from ...context import WebContext
 from ...model import BaseEntity
-from ...utils.tranform_utils import transform_nan
 from datetime import datetime
 from loguru import logger
 
@@ -71,7 +70,7 @@ class ChainedUpdate(BaseChainedUpdate):
                     data['deleted'] = 0
                     data['create_by'] = WebContext().uid()
                     data['create_at'] = now
-                    args = [transform_nan(data[col]) for col in self.columns(exclude=["id"])]
+                    args = [data[col] for col in self.columns(exclude=["id"])]
                     if duplicated_key_update:
                         args += args
                     logger.debug(f'#### args: {args}')

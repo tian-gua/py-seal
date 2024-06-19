@@ -1,10 +1,11 @@
 from .meta import Meta
-from ..base_chained_update import BaseChainedUpdate
 from .sqlite_connector import SqliteConnector
+from ..base_chained_update import BaseChainedUpdate
 from ...context import WebContext
 from ...model import BaseEntity
 from datetime import datetime
 from loguru import logger
+
 
 class ChainedUpdate(BaseChainedUpdate):
 

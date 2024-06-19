@@ -1,14 +1,14 @@
 import sqlite3
 
-from ... import get_config
-from ..connector import DBConnector
+from ... import seal
+from ..connector import Connector
 from ...wrapper import singleton
 
 
 @singleton
-class SqliteConnector(DBConnector):
+class SqliteConnector(Connector):
     def __init__(self):
-        self.config = get_config('seal', 'sqlite')
+        self.config = seal.get_config('seal', 'sqlite')
 
     def get_connection(self):
         return sqlite3.connect(self.config['path'])
