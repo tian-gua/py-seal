@@ -1,3 +1,4 @@
+import traceback
 from .mysql_connector import MysqlConnector
 from .meta import Meta
 from ..base_chained_query import BaseChainedQuery
@@ -26,6 +27,7 @@ class ChainedQuery(BaseChainedQuery):
             return c.fetchone()[0]
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
@@ -39,6 +41,7 @@ class ChainedQuery(BaseChainedQuery):
             return self.fetchall(c)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
@@ -54,6 +57,7 @@ class ChainedQuery(BaseChainedQuery):
             return PageResult(page=page, page_size=page_size, total=total, data=entities)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
@@ -67,6 +71,7 @@ class ChainedQuery(BaseChainedQuery):
             return self.fetchone(c)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
@@ -80,6 +85,7 @@ class ChainedQuery(BaseChainedQuery):
             return self.fetchall(c)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:

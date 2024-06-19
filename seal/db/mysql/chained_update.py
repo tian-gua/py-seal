@@ -1,3 +1,5 @@
+import traceback
+
 from .mysql_connector import MysqlConnector
 from .meta import Meta
 from ..base_chained_update import BaseChainedUpdate
@@ -38,6 +40,7 @@ class ChainedUpdate(BaseChainedUpdate):
             self.__conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
@@ -80,6 +83,7 @@ class ChainedUpdate(BaseChainedUpdate):
             self.__conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
@@ -94,6 +98,7 @@ class ChainedUpdate(BaseChainedUpdate):
             self.__conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
@@ -108,6 +113,7 @@ class ChainedUpdate(BaseChainedUpdate):
             self.__conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
@@ -128,6 +134,7 @@ class ChainedUpdate(BaseChainedUpdate):
             self.__conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
+            logger.error(traceback.format_exc())
         finally:
             c.close()
             if reuse_conn is False:
