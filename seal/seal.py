@@ -10,11 +10,13 @@ class Seal:
 
     def init(self, config_path):
         self.configuration.load(config_path)
-
-        logger.add('seal.log', rotation='1 day', retention='7 days', level='DEBUG')
-        logger.info(f'初始化 seal({self}) 成功')
-
         self.initialized = True
+
+        logger.add(self.get_config('seal', 'loguru', 'path'),
+                   rotation=self.get_config('seal', 'loguru', 'rotation'),
+                   retention=self.get_config('seal', 'loguru', 'retention'),
+                   level=self.get_config('seal', 'loguru', 'level'))
+        logger.info(f'初始化 seal({self}) 成功')
         return self
 
     def get_config(self, *keys):
