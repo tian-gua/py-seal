@@ -16,13 +16,13 @@ class ChainedQuery(BaseChainedQuery):
         if clz is None and table is None:
             raise ValueError('clz和table不能同时为空')
         super().__init__(clz=clz, placeholder='?', table=table, logic_delete_col=logic_delete_col)
-        self.__conn = SqliteConnector().get_connection()
+        self._conn = SqliteConnector().get_connection()
 
-    def __get_cursor(self):
-        return self.__conn.cursor()
+    def _get_cursor(self):
+        return self._conn.cursor()
 
     def count(self, reuse_conn: bool = False):
-        c = self.__get_cursor()
+        c = self._get_cursor()
         try:
             sql, args = self.count_statement()
             result = c.execute(sql, args)
@@ -33,10 +33,10 @@ class ChainedQuery(BaseChainedQuery):
         finally:
             c.close()
             if reuse_conn is False:
-                self.__conn.close()
+                self._conn.close()
 
     def list(self, reuse_conn: bool = False):
-        c = self.__get_cursor()
+        c = self._get_cursor()
         try:
             sql, args = self.select_statement()
             result = c.execute(sql, args)
@@ -50,10 +50,10 @@ class ChainedQuery(BaseChainedQuery):
         finally:
             c.close()
             if reuse_conn is False:
-                self.__conn.close()
+                self._conn.close()
 
     def page(self, page: int = 1, page_size: int = 10, reuse_conn=False) -> PageResult:
-        c = self.__get_cursor()
+        c = self._get_cursor()
         try:
             sql, args = self.page_statement(page, page_size)
             result = c.execute(sql, args)
@@ -68,10 +68,10 @@ class ChainedQuery(BaseChainedQuery):
         finally:
             c.close()
             if reuse_conn is False:
-                self.__conn.close()
+                self._conn.close()
 
     def first(self, reuse_conn: bool = False):
-        c = self.__get_cursor()
+        c = self._get_cursor()
         try:
             sql, args = self.select_statement()
             result = c.execute(sql, args)
@@ -84,10 +84,10 @@ class ChainedQuery(BaseChainedQuery):
         finally:
             c.close()
             if reuse_conn is False:
-                self.__conn.close()
+                self._conn.close()
 
     def mapping(self, reuse_conn: bool = False):
-        c = self.__get_cursor()
+        c = self._get_cursor()
         try:
             sql, args = self.mapping_statement()
             result = c.execute(sql, args)
@@ -100,4 +100,4 @@ class ChainedQuery(BaseChainedQuery):
         finally:
             c.close()
             if reuse_conn is False:
-                self.__conn.close()
+                self._conn.close()

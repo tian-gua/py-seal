@@ -14,7 +14,7 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
     def __init__(self, clz, placeholder, table: str = None, logic_delete_col: str = None):
         self.clz = clz
         self.table = table if table is not None else self.clz.table_name()
-        self.__conditions: list[tuple] = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
+        self._where: list[tuple] = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
         self.sets = {}
         self.placeholder = placeholder
 
@@ -33,54 +33,54 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
             return [key for key, db_type in self.table_info.columns if key not in exclude]
         return [col for col in self.clz.columns() if col not in exclude]
 
-    def __args(self):
-        if len(self.__conditions) == 0:
+    def build_args(self):
+        if len(self._where) == 0:
             return ()
-        return tuple([cond[1] for cond in self.__conditions])
+        return tuple([cond[1] for cond in self._where])
 
-    def __where(self):
-        if len(self.__conditions) == 0:
+    def build_where(self):
+        if len(self._where) == 0:
             return ''
-        return 'where ' + ' and '.join([f'{cond[0]} {cond[2]} {self.placeholder}' for cond in self.__conditions])
+        return 'where ' + ' and '.join([f'{cond[0]} {cond[2]} {self.placeholder}' for cond in self._where])
 
     def eq(self, col, value):
-        self.__conditions.append((col, value, '='))
+        self._where.append((col, value, '='))
         return self
 
     def ne(self, col, value):
-        self.__conditions.append((col, value, '!='))
+        self._where.append((col, value, '!='))
         return self
 
     def gt(self, col, value):
-        self.__conditions.append((col, value, '>'))
+        self._where.append((col, value, '>'))
         return self
 
     def ge(self, col, value):
-        self.__conditions.append((col, value, '>='))
+        self._where.append((col, value, '>='))
         return self
 
     def lt(self, col, value):
-        self.__conditions.append((col, value, '<'))
+        self._where.append((col, value, '<'))
         return self
 
     def le(self, col, value):
-        self.__conditions.append((col, value, '<='))
+        self._where.append((col, value, '<='))
         return self
 
     def in_(self, col, value):
-        self.__conditions.append((col, value, 'in'))
+        self._where.append((col, value, 'in'))
         return self
 
     def l_like(self, col, value):
-        self.__conditions.append((col, f'%{value}', 'like'))
+        self._where.append((col, f'%{value}', 'like'))
         return self
 
     def r_like(self, col, value):
-        self.__conditions.append((col, f'{value}%', 'like'))
+        self._where.append((col, f'{value}%', 'like'))
         return self
 
     def like(self, col, value):
-        self.__conditions.append((col, f'%{value}%', 'like'))
+        self._where.append((col, f'%{value}%', 'like'))
         return self
 
     def set(self, **sets):
@@ -88,11 +88,11 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         return self
 
     def delete_statement(self) -> tuple[str, tuple]:
-        if self.__conditions is None or self.__where() == '':
+        if self._where is None or self.build_where() == '':
             raise Exception('conditions is required')
 
-        sql = f'DELETE FROM {self.table} {self.__where()}'
-        args = self.__args()
+        sql = f'DELETE FROM {self.table} {self.build_where()}'
+        args = self.build_args()
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')
         return sql, args
@@ -100,15 +100,15 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
     def update_statement(self) -> tuple[str, tuple]:
         if self.sets is None or len(self.sets.keys()) == 0:
             raise Exception('update set is required')
-        if self.__conditions is None or self.__where() == '':
+        if self._where is None or self.build_where() == '':
             raise Exception('update condition is required')
 
         update_by = WebContext().uid()
         if update_by is not None:
             self.sets['update_by'] = WebContext().uid()
         self.sets['update_at'] = datetime.now()
-        sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.sets.keys()])} {self.__where()}'
-        args = tuple(self.sets.values()) + self.__args()
+        sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.sets.keys()])} {self.build_where()}'
+        args = tuple(self.sets.values()) + self.build_args()
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')
         return sql, args

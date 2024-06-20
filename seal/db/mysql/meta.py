@@ -2,6 +2,7 @@ from datetime import datetime
 from .mysql_connector import MysqlConnector
 from ..table_info import TableInfo
 from ... import cache
+from loguru import logger
 
 
 class Meta:
@@ -34,6 +35,7 @@ class Meta:
                     table_info.model_fields.append((field_name, datetime))
                 else:
                     table_info.model_fields.append((field_name, str))
+            logger.debug(f'获取表{table}的结构信息：{table_info}')
             cache.set(f'table_info_{table}', table_info)
             return table_info
         finally:
