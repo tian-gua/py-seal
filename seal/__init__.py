@@ -1,4 +1,4 @@
-from .seal import Seal as _Seal
+from ._seal import Seal as _Seal
 from .cache import cache
 
 __author__ = 'melon'

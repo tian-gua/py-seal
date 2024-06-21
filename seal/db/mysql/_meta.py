@@ -1,5 +1,5 @@
 from datetime import datetime
-from .mysql_connector import MysqlConnector
+from ._mysql_connector import MysqlConnector
 from ..table_info import TableInfo
 from ... import cache
 from loguru import logger

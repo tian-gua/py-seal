@@ -1,8 +1,8 @@
 import traceback
 
-from .meta import Meta
-from .sqlite_connector import SqliteConnector
-from ..base_chained_update import BaseChainedUpdate
+from ._mysql_connector import MysqlConnector
+from ._meta import Meta
+from .._base_chained_update import BaseChainedUpdate
 from ...context import WebContext
 from ...model import BaseEntity
 from datetime import datetime
@@ -15,8 +15,8 @@ class ChainedUpdate(BaseChainedUpdate):
         return Meta
 
     def __init__(self, clz=None, table: str = None, logic_delete_col: str = None):
-        super().__init__(clz, '?', table, logic_delete_col)
-        self._conn = SqliteConnector().get_connection()
+        super().__init__(clz, '%s', table, logic_delete_col)
+        self._conn = MysqlConnector().get_connection()
 
     def _get_cursor(self):
         return self._conn.cursor()
@@ -25,16 +25,18 @@ class ChainedUpdate(BaseChainedUpdate):
         self.sets['deleted'] = 1
         self.update()
 
-    def insert(self, entity: BaseEntity = None, data: dict = None, duplicated_ignore=False, reuse_conn: bool = False):
+    def insert(self, entity: BaseEntity = None, data: dict = None, duplicated_key_update=False,
+               reuse_conn: bool = False):
         c = self._get_cursor()
         try:
             if entity is not None:
-                sql, args = self.insert_statement(entity=entity, duplicated_ignore=duplicated_ignore)
+                sql, args = self.insert_statement(entity=entity, duplicated_key_update=duplicated_key_update)
             elif data is not None:
-                sql, args = self.insert_statement(data=data, duplicated_ignore=duplicated_ignore)
+                sql, args = self.insert_statement(data=data, duplicated_key_update=duplicated_key_update)
             else:
                 raise ValueError('null data')
-            c.execute(sql, args)
+            affected = c.execute(sql, args)
+            logger.debug(f'#### affected: {affected}')
             self._conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
@@ -45,13 +47,14 @@ class ChainedUpdate(BaseChainedUpdate):
                 self._conn.close()
 
     def insert_bulk(self, entity_list: list[BaseEntity] = None, data_list: list[dict] = None,
-                    duplicated_ignore: bool = False, reuse_conn: bool = False):
+                    duplicated_key_update: bool = False, reuse_conn: bool = False):
         if entity_list is None and data_list is None:
             raise ValueError('null data')
 
         c = self._get_cursor()
         try:
-            sql = self.insert_bulk_statement(duplicated_ignore=duplicated_ignore)
+            sql = self.insert_bulk_statement(duplicated_key_update=duplicated_key_update)
+            total_affected = 0
             if entity_list is not None:
                 for entity in entity_list:
                     now = datetime.now()
@@ -59,17 +62,24 @@ class ChainedUpdate(BaseChainedUpdate):
                     entity.create_by = WebContext().uid()
                     entity.create_at = now
                     args = [getattr(entity, col) for col in self.columns(exclude=["id"])]
-                    logger.info(f'#### args: {args}')
-                    c.execute(sql, tuple(args))
+                    if duplicated_key_update:
+                        args += args
+                    logger.debug(f'#### args: {args}')
+                    affected = c.execute(sql, args)
+                    total_affected += affected
             elif data_list is not None:
                 for data in data_list:
                     now = datetime.now()
                     data['deleted'] = 0
                     data['create_by'] = WebContext().uid()
                     data['create_at'] = now
-                    args = [data[col] for col in self.clz.columns(exclude=["id"])]
-                    logger.info(f'#### args: {args}')
-                    c.execute(sql, tuple(args))
+                    args = [data[col] for col in self.columns(exclude=["id"])]
+                    if duplicated_key_update:
+                        args += args
+                    logger.debug(f'#### args: {args}')
+                    affected = c.execute(sql, args)
+                    total_affected += affected
+            logger.debug(f'#### affected: {total_affected}')
             self._conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
@@ -82,9 +92,9 @@ class ChainedUpdate(BaseChainedUpdate):
     def update(self, reuse_conn: bool = False):
         c = self._get_cursor()
         try:
-
             sql, args = self.update_statement()
-            c.execute(sql, args)
+            affected = c.execute(sql, args)
+            logger.debug(f'#### affected: {affected}')
             self._conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
@@ -98,7 +108,8 @@ class ChainedUpdate(BaseChainedUpdate):
         c = self._get_cursor()
         try:
             sql, args = self.delete_statement()
-            c.execute(sql, args)
+            affected = c.execute(sql, args)
+            logger.debug(f'#### affected: {affected}')
             self._conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
@@ -117,7 +128,9 @@ class ChainedUpdate(BaseChainedUpdate):
                 sql, args = self.update_by_pk_statement(data=data)
             else:
                 raise ValueError('null data')
-            c.execute(sql, args)
+
+            affected = c.execute(sql, args)
+            logger.debug(f'#### affected: {affected}')
             self._conn.commit()
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')

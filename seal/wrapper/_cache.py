@@ -1,7 +1,11 @@
+import functools
+
 from ..cache import cache
 
 
 def cache_func(func):
+
+    @functools.wraps(func)
     def wrapper(*args):
         is_method = True if func.__name__ != func.__qualname__ else False
         args_ = args[1:] if is_method else args

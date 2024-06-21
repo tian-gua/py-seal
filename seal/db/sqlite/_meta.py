@@ -1,5 +1,5 @@
 from datetime import datetime
-from .sqlite_connector import SqliteConnector
+from ._sqlite_connector import SqliteConnector
 from ..table_info import TableInfo
 from ... import cache
 from loguru import logger

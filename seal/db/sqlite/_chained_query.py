@@ -1,20 +1,22 @@
 import traceback
-from .mysql_connector import MysqlConnector
-from .meta import Meta
-from ..base_chained_query import BaseChainedQuery
+
+from ._sqlite_connector import SqliteConnector
+from ._meta import Meta
+from .._base_chained_query import BaseChainedQuery
 from ...model import PageResult
 from loguru import logger
 
 
 class ChainedQuery(BaseChainedQuery):
+
     def meta(self):
         return Meta
 
     def __init__(self, clz=None, table: str = None, logic_delete_col: str = None):
         if clz is None and table is None:
             raise ValueError('clz和table不能同时为空')
-        super().__init__(clz=clz, placeholder='%s', table=table, logic_delete_col=logic_delete_col)
-        self._conn = MysqlConnector().get_connection()
+        super().__init__(clz=clz, placeholder='?', table=table, logic_delete_col=logic_delete_col)
+        self._conn = SqliteConnector().get_connection()
 
     def _get_cursor(self):
         return self._conn.cursor()
@@ -23,8 +25,8 @@ class ChainedQuery(BaseChainedQuery):
         c = self._get_cursor()
         try:
             sql, args = self.count_statement()
-            c.execute(sql, args)
-            return c.fetchone()[0]
+            result = c.execute(sql, args)
+            return result.fetchone()[0]
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
@@ -37,8 +39,11 @@ class ChainedQuery(BaseChainedQuery):
         c = self._get_cursor()
         try:
             sql, args = self.select_statement()
-            c.execute(sql, args)
-            return self.fetchall(c)
+            result = c.execute(sql, args)
+            if result is None:
+                return []
+
+            return self.fetchall(result)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
@@ -51,8 +56,10 @@ class ChainedQuery(BaseChainedQuery):
         c = self._get_cursor()
         try:
             sql, args = self.page_statement(page, page_size)
-            c.execute(sql, args)
-            entities = self.fetchall(c)
+            result = c.execute(sql, args)
+            if result is None:
+                return PageResult(page=page, page_size=page_size, total=0, data=[])
+            entities = self.fetchall(result)
             total = self.count(reuse_conn=True)
             return PageResult(page=page, page_size=page_size, total=total, data=entities)
         except Exception as e:
@@ -67,8 +74,10 @@ class ChainedQuery(BaseChainedQuery):
         c = self._get_cursor()
         try:
             sql, args = self.select_statement()
-            c.execute(sql, args)
-            return self.fetchone(c)
+            result = c.execute(sql, args)
+            if result is None:
+                return None
+            return self.fetchone(result)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
@@ -81,8 +90,10 @@ class ChainedQuery(BaseChainedQuery):
         c = self._get_cursor()
         try:
             sql, args = self.mapping_statement()
-            c.execute(sql, args)
-            return self.fetchall(c)
+            result = c.execute(sql, args)
+            if result is None:
+                return []
+            return self.fetchall(result)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
