@@ -1,1 +1,1 @@
-from .configuration import Configuration
+from ._configuration import Configuration
