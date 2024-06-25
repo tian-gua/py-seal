@@ -12,6 +12,15 @@
 </p>
 
 ---
+## 集成
+- [x] fastapi
+- [x] websocket
+- [x] loguru
+- [x] sqlite
+- [x] mysql
+- [x] cache
+- [x] schedule
+
 
 ## 安装
 ```shell
