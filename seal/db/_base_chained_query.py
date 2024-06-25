@@ -33,8 +33,8 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         if len(self._columns) != 0:
             return self._columns
         if self.is_dynamic:
-            return [key for key, db_type in self.table_info.columns]
-        return [col if col not in self._ignore_columns else '' for col in self.clz.columns()]
+            return [key for key, db_type in self.table_info.columns if key not in self._ignore_columns]
+        return [col for col in self.clz.columns() if col not in self._ignore_columns]
 
     def build_select(self):
         return ', '.join(self.columns())
@@ -152,12 +152,12 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
                 if type(row) is dict:
                     entities.append(row)
                 else:
-                    entities.append({field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)})
+                    entities.append({field: row[i] for i, field in enumerate(self.columns())})
             else:
                 if type(row) is dict:
                     entities.append(self.clz(**row))
                 else:
-                    entities.append(self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())}))
+                    entities.append(self.clz(**{col: row[i] for i, col in enumerate(self.columns())}))
         return entities
 
     def fetchone(self, cursor):
@@ -168,9 +168,9 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
             if type(row) is dict:
                 return row
             else:
-                return {field[0]: row[i] for i, field in enumerate(self.table_info.model_fields)}
+                return {field: row[i] for i, field in enumerate(self.columns())}
         else:
             if type(row) is dict:
                 return self.clz(**row)
             else:
-                return self.clz(**{col: row[i] for i, col in enumerate(self.clz.columns())})
+                return self.clz(**{col: row[i] for i, col in enumerate(self.columns())})
