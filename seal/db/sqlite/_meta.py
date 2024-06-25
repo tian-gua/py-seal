@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import datetime
 from ._sqlite_connector import SqliteConnector
 from ..table_info import TableInfo

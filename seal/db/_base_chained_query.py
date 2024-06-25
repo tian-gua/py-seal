@@ -1,5 +1,9 @@
 import abc
+from collections import namedtuple
 from loguru import logger
+
+from .table_info import TableInfo
+from ..model import dynamic_models, BaseEntity
 
 
 class BaseChainedQuery(metaclass=abc.ABCMeta):
@@ -8,9 +12,22 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
     def meta(self):
         ...
 
-    def __init__(self, clz=None, placeholder=None, table: str = None, logic_delete_col: str = None):
-        self.clz = clz
-        self.table = table if table is not None else self.clz.table_name()
+    def __init__(self, target, logic_delete_col: str = None, placeholder=None):
+        if type(target) is not str:
+            self.clz = target
+            self.table = target.table_name()
+        else:
+            self.table = target
+            if not dynamic_models.has(target):
+                table_info: TableInfo = self.meta().get_table_info(self.table)
+                dynamic_model = namedtuple(target,
+                                           [col[0] for col in table_info.columns],
+                                           defaults=(None,) * len(table_info.columns))
+                dynamic_models.register(target, dynamic_model)
+                self.clz = dynamic_model
+            else:
+                self.clz = dynamic_models.get(target)
+
         self._where: list[tuple] = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
         self._columns = ()
         self._sorts = ()
@@ -19,22 +36,12 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         self._ignore_columns = ()
         self.placeholder = placeholder
 
-        if clz is None:
-            self.is_dynamic = True
-            self.table_info = self.meta().get_table_info(self.table)
-        else:
-            if clz.dynamic:
-                self.is_dynamic = True
-                self.table_info = self.meta().get_table_info(self.table)
-            else:
-                self.is_dynamic = False
-
     def columns(self):
         if len(self._columns) != 0:
             return self._columns
-        if self.is_dynamic:
-            return [key for key, db_type in self.table_info.columns if key not in self._ignore_columns]
-        return [col for col in self.clz.columns() if col not in self._ignore_columns]
+        if issubclass(self.clz, BaseEntity):
+            return [col for col in self.clz.columns() if col not in self._ignore_columns]
+        return [key for key in self.clz._fields if key not in self._ignore_columns]
 
     def build_select(self):
         return ', '.join(self.columns())
@@ -144,33 +151,31 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         logger.info(f'#### args: {args}')
         return sql, args
 
-    def fetchall(self, cursor) -> list:
+    def fetchall(self, cursor, to_dict: bool = False) -> list:
         rows = cursor.fetchall()
         entities = []
         for row in rows:
-            if self.is_dynamic:
-                if type(row) is dict:
+            if type(row) is dict:
+                if to_dict:
                     entities.append(row)
                 else:
-                    entities.append({field: row[i] for i, field in enumerate(self.columns())})
-            else:
-                if type(row) is dict:
                     entities.append(self.clz(**row))
+            else:
+                if to_dict:
+                    entities.append({col: row[i] for i, col in enumerate(self.columns())})
                 else:
                     entities.append(self.clz(**{col: row[i] for i, col in enumerate(self.columns())}))
         return entities
 
-    def fetchone(self, cursor):
+    def fetchone(self, cursor, to_dict: bool = False):
         row = cursor.fetchone()
         if row is None:
             return None
-        if self.is_dynamic:
-            if type(row) is dict:
+        if type(row) is dict:
+            if to_dict:
                 return row
-            else:
-                return {field: row[i] for i, field in enumerate(self.columns())}
+            return self.clz(**row)
         else:
-            if type(row) is dict:
-                return self.clz(**row)
-            else:
-                return self.clz(**{col: row[i] for i, col in enumerate(self.columns())})
+            if to_dict:
+                return {col: row[i] for i, col in enumerate(self.columns())}
+            return self.clz(**{col: row[i] for i, col in enumerate(self.columns())})

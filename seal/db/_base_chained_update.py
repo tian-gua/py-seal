@@ -1,6 +1,9 @@
 import abc
+from collections import namedtuple
 from datetime import datetime
-from ..model import BaseEntity
+
+from .table_info import TableInfo
+from ..model import BaseEntity, dynamic_models
 from ..context import WebContext
 from loguru import logger
 
@@ -11,27 +14,29 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
     def meta(self):
         ...
 
-    def __init__(self, clz, placeholder, table: str = None, logic_delete_col: str = None):
-        self.clz = clz
-        self.table = table if table is not None else self.clz.table_name()
+    def __init__(self, target, logic_delete_col: str = None, placeholder: str = None):
+        if type(target) is not str:
+            self.clz = target
+            self.table = target.table_name()
+        else:
+            self.table = target
+            if not dynamic_models.has(target):
+                table_info: TableInfo = self.meta().get_table_info(self.table)
+                dynamic_model = namedtuple(target,
+                                           [col[0] for col in table_info.columns],
+                                           defaults=(None,) * len(table_info.columns))
+                dynamic_models.register(target, dynamic_model)
+                self.clz = dynamic_model
+            else:
+                self.clz = dynamic_models.get(target)
         self._where: list[tuple] = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
         self.sets = {}
         self.placeholder = placeholder
 
-        if clz is None:
-            self.is_dynamic = True
-            self.table_info = self.meta().get_table_info(self.table)
-        else:
-            if clz.dynamic:
-                self.is_dynamic = True
-                self.table_info = self.meta().get_table_info(self.table)
-            else:
-                self.is_dynamic = False
-
     def columns(self, exclude=None):
-        if self.is_dynamic:
-            return [key for key, db_type in self.table_info.columns if key not in exclude]
-        return [col for col in self.clz.columns() if col not in exclude]
+        if issubclass(self.clz, BaseEntity):
+            return [col for col in self.clz.columns() if col not in exclude]
+        return [key for key in self.clz._fields if key not in exclude]
 
     def build_args(self):
         if len(self._where) == 0:
@@ -113,60 +118,54 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         logger.info(f'#### args: {args}')
         return sql, args
 
-    def update_by_pk_statement(self, entity: BaseEntity = None, data: dict = None) -> tuple[str, tuple]:
-        if entity is None and data is None:
+    def update_by_pk_statement(self, record) -> tuple[str, tuple]:
+        if record is None:
             raise ValueError('null data')
 
-        if entity is not None:
-            entity.update_by = WebContext().uid()
-            entity.update_at = datetime.now()
+        if isinstance(record, BaseEntity):
+            record.update_by = WebContext().uid()
+            record.update_at = datetime.now()
         else:
-            data['update_by'] = WebContext().uid()
-            data['update_at'] = datetime.now()
+            if record._fields.__contains__('update_by'):
+                record.update_by = WebContext().uid()
+            if record._fields.__contains__('update_at'):
+                record.update_at = datetime.now()
 
         update_cols = [f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])]
         sql = f'UPDATE {self.table} SET {", ".join(update_cols)} where id = {self.placeholder}'
-
-        if entity is not None:
-            args = tuple([getattr(entity, col) for col in self.columns(exclude=["id"])] + [entity.id])
-        else:
-            args = tuple([data[col] for col in self.columns(exclude=["id"])] + [data['id']])
+        args = tuple([getattr(record, col) for col in self.columns(exclude=["id"])] + [record.id])
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')
         return sql, args
 
-    def insert_statement(self, entity: BaseEntity = None, data: dict = None, duplicated_ignore=False,
-                         duplicated_key_update=False) -> tuple[str, tuple]:
-        if entity is None and data is None:
+    def insert_statement(self, record, duplicated_ignore=False, duplicated_key_update=False) -> tuple[str, tuple]:
+        if record is None:
             raise ValueError('null data')
 
-        if entity is not None:
-            now = datetime.now()
-            entity.deleted = 0
-            entity.create_by = WebContext().uid()
-            entity.create_at = now
+        now = datetime.now()
+        if isinstance(record, BaseEntity):
+            record.deleted = 0
+            record.create_by = WebContext().uid()
+            record.create_at = now
         else:
-            now = datetime.now()
-            data['deleted'] = 0
-            data['create_by'] = WebContext().uid()
-            data['create_at'] = now
+            if record._fields.__contains__('deleted'):
+                record.deleted = 0
+            if record._fields.__contains__('create_by'):
+                record.create_by = WebContext().uid()
+            if record._fields.__contains__('create_at'):
+                record.create_at = now
 
         cols = ', '.join(self.columns(exclude=["id"]))
-        placeholders = ', '.join([self.placeholder for col in self.columns(exclude=["id"])])
+        placeholders = ', '.join([self.placeholder for _ in self.columns(exclude=["id"])])
 
         sql = f'INSERT {"OR IGNORE" if duplicated_ignore else ""} INTO {self.table} ({cols}) VALUES ({placeholders})'
         if duplicated_key_update:
             sql += f'{" ON DUPLICATE KEY UPDATE" if duplicated_key_update else ""}'
             sql += ', '.join([f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])])
 
-        if entity is not None:
-            args = tuple([getattr(entity, col) for col in self.columns(exclude=["id"])])
-            if duplicated_key_update:
-                args += args
-        else:
-            args = tuple([data[col] for col in self.columns(exclude=["id"])])
-            if duplicated_key_update:
-                args += args
+        args = tuple([getattr(record, col) for col in self.columns(exclude=["id"])])
+        if duplicated_key_update:
+            args += args
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')
         return sql, args

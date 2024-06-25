@@ -10,10 +10,8 @@ class ChainedQuery(BaseChainedQuery):
     def meta(self):
         return Meta
 
-    def __init__(self, clz=None, table: str = None, logic_delete_col: str = None):
-        if clz is None and table is None:
-            raise ValueError('clz和table不能同时为空')
-        super().__init__(clz=clz, placeholder='%s', table=table, logic_delete_col=logic_delete_col)
+    def __init__(self, target, logic_delete_col: str = None):
+        super().__init__(target, logic_delete_col=logic_delete_col, placeholder='%s')
         self._conn = MysqlConnector().get_connection()
 
     def _get_cursor(self):
@@ -33,12 +31,12 @@ class ChainedQuery(BaseChainedQuery):
             if reuse_conn is False:
                 self._conn.close()
 
-    def list(self, reuse_conn: bool = False):
+    def list(self, to_dict: False, reuse_conn: bool = False):
         c = self._get_cursor()
         try:
             sql, args = self.select_statement()
             c.execute(sql, args)
-            return self.fetchall(c)
+            return self.fetchall(c, to_dict=to_dict)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
@@ -47,12 +45,12 @@ class ChainedQuery(BaseChainedQuery):
             if reuse_conn is False:
                 self._conn.close()
 
-    def page(self, page: int = 1, page_size: int = 10, reuse_conn=False) -> PageResult:
+    def page(self, page: int = 1, page_size: int = 10, to_dict=False, reuse_conn=False) -> PageResult:
         c = self._get_cursor()
         try:
             sql, args = self.page_statement(page, page_size)
             c.execute(sql, args)
-            entities = self.fetchall(c)
+            entities = self.fetchall(c, to_dict=to_dict)
             total = self.count(reuse_conn=True)
             return PageResult(page=page, page_size=page_size, total=total, data=entities)
         except Exception as e:
@@ -63,12 +61,12 @@ class ChainedQuery(BaseChainedQuery):
             if reuse_conn is False:
                 self._conn.close()
 
-    def first(self, reuse_conn: bool = False):
+    def first(self, to_dict: bool = False, reuse_conn: bool = False):
         c = self._get_cursor()
         try:
             sql, args = self.select_statement()
             c.execute(sql, args)
-            return self.fetchone(c)
+            return self.fetchone(c, to_dict=to_dict)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
@@ -77,12 +75,12 @@ class ChainedQuery(BaseChainedQuery):
             if reuse_conn is False:
                 self._conn.close()
 
-    def mapping(self, reuse_conn: bool = False):
+    def mapping(self, to_dict: bool = False, reuse_conn: bool = False):
         c = self._get_cursor()
         try:
             sql, args = self.mapping_statement()
             c.execute(sql, args)
-            return self.fetchall(c)
+            return self.fetchall(c, to_dict=to_dict)
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
