@@ -51,18 +51,30 @@ class ChainedUpdate(BaseChainedUpdate):
             total_affected = 0
             for record in records:
                 now = datetime.now()
-                if isinstance(record, BaseEntity):
-                    record.deleted = 0
-                    record.create_by = WebContext().uid()
-                    record.create_at = now
+                insert_columns = self.columns(exclude=["id"])
+
+                if isinstance(record, dict):
+                    if 'deleted' in insert_columns:
+                        record['deleted'] = 0
+                    if 'create_by' in insert_columns:
+                        record['create_by'] = WebContext().uid()
+                    if 'create_at' in insert_columns:
+                        record['create_at'] = now
+                    args = [record[col] for col in insert_columns]
                 else:
-                    if record._fields.__contains__('deleted'):
+                    if isinstance(record, BaseEntity):
                         record.deleted = 0
-                    if record._fields.__contains__('create_by'):
                         record.create_by = WebContext().uid()
-                    if record._fields.__contains__('create_at'):
                         record.create_at = now
-                args = [getattr(record, col) for col in self.columns(exclude=["id"])]
+                    else:
+                        if 'deleted' in insert_columns:
+                            record.deleted = 0
+                        if 'create_by' in insert_columns:
+                            record.create_by = WebContext().uid()
+                        if 'create_at' in insert_columns:
+                            record.create_at = now
+                    args = [getattr(record, col) for col in insert_columns]
+
                 if duplicated_key_update:
                     args += args
                 logger.debug(f'#### args: {args}')

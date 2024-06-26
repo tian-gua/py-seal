@@ -1,7 +1,6 @@
 import abc
 from collections import namedtuple
 from datetime import datetime
-
 from .table_info import TableInfo
 from ..model import BaseEntity, dynamic_models
 from ..context import WebContext
@@ -122,18 +121,32 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         if record is None:
             raise ValueError('null data')
 
-        if isinstance(record, BaseEntity):
-            record.update_by = WebContext().uid()
-            record.update_at = datetime.now()
-        else:
-            if record._fields.__contains__('update_by'):
-                record.update_by = WebContext().uid()
-            if record._fields.__contains__('update_at'):
-                record.update_at = datetime.now()
+        now = datetime.now()
+        update_columns = self.columns(exclude=["id"])
+        if isinstance(record, dict):
+            if 'update_by' in update_columns:
+                record['update_by'] = WebContext().uid()
+            if 'update_at' in update_columns:
+                record['update_at'] = now
+            valid_columns = [col for col in update_columns if record.__contains__(col)]
+            id_ = record['id']
+            args = tuple([record[col] for col in valid_columns] + [id_])
 
-        update_cols = [f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])]
-        sql = f'UPDATE {self.table} SET {", ".join(update_cols)} where id = {self.placeholder}'
-        args = tuple([getattr(record, col) for col in self.columns(exclude=["id"])] + [record.id])
+        else:
+            if isinstance(record, BaseEntity):
+                record.update_by = WebContext().uid()
+                record.update_at = now
+            else:
+                if 'update_by' in update_columns:
+                    record.update_by = WebContext().uid()
+                if 'update_at' in update_columns:
+                    record.update_at = now
+            valid_columns = [col for col in update_columns if getattr(record, col) is not None]
+            id_ = record.id
+            args = tuple([getattr(record, col) for col in valid_columns] + [id_])
+
+        sets = [f'{col} = {self.placeholder}' for col in valid_columns]
+        sql = f'UPDATE {self.table} SET {", ".join(sets)} where id = {self.placeholder}'
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')
         return sql, args
@@ -143,27 +156,37 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
             raise ValueError('null data')
 
         now = datetime.now()
-        if isinstance(record, BaseEntity):
-            record.deleted = 0
-            record.create_by = WebContext().uid()
-            record.create_at = now
+        insert_columns = self.columns(exclude=["id"])
+
+        if isinstance(record, dict):
+            if 'deleted' in insert_columns:
+                record['deleted'] = 0
+            if 'create_by' in insert_columns:
+                record['create_by'] = WebContext().uid()
+            if 'create_at' in insert_columns:
+                record['create_at'] = now
+            args = tuple([record[col] for col in insert_columns])
         else:
-            if record._fields.__contains__('deleted'):
+            if isinstance(record, BaseEntity):
                 record.deleted = 0
-            if record._fields.__contains__('create_by'):
                 record.create_by = WebContext().uid()
-            if record._fields.__contains__('create_at'):
                 record.create_at = now
+            else:
+                if 'deleted' in insert_columns:
+                    record.deleted = 0
+                if 'create_by' in insert_columns:
+                    record.create_by = WebContext().uid()
+                if 'create_at' in insert_columns:
+                    record.create_at = now
+            args = tuple([getattr(record, col) for col in insert_columns])
 
-        cols = ', '.join(self.columns(exclude=["id"]))
-        placeholders = ', '.join([self.placeholder for _ in self.columns(exclude=["id"])])
+        placeholders = ', '.join([self.placeholder for _ in insert_columns])
+        columns_str = ', '.join(insert_columns)
 
-        sql = f'INSERT {"OR IGNORE" if duplicated_ignore else ""} INTO {self.table} ({cols}) VALUES ({placeholders})'
+        sql = f'INSERT {"OR IGNORE" if duplicated_ignore else ""} INTO {self.table} ({columns_str}) VALUES ({placeholders})'
         if duplicated_key_update:
             sql += f'{" ON DUPLICATE KEY UPDATE" if duplicated_key_update else ""}'
             sql += ', '.join([f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])])
-
-        args = tuple([getattr(record, col) for col in self.columns(exclude=["id"])])
         if duplicated_key_update:
             args += args
         logger.info(f'#### sql: {sql}')
@@ -171,11 +194,12 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         return sql, args
 
     def insert_bulk_statement(self, duplicated_ignore=False, duplicated_key_update=False) -> str:
-        cols = ', '.join(self.columns(exclude=["id"]))
-        placeholders = ', '.join([self.placeholder for _ in self.columns(exclude=["id"])])
-        sql = f'INSERT {"OR IGNORE" if duplicated_ignore else ""} INTO {self.table} ({cols}) VALUES ({placeholders})'
+        columns = self.columns(exclude=["id"])
+        columns_str = ', '.join(columns)
+        placeholders = ', '.join([self.placeholder for _ in columns])
+        sql = f'INSERT {"OR IGNORE" if duplicated_ignore else ""} INTO {self.table} ({columns_str}) VALUES ({placeholders})'
         if duplicated_key_update:
             sql += f'{" ON DUPLICATE KEY UPDATE " if duplicated_key_update else ""}'
-            sql += ', '.join([f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])])
+            sql += ', '.join([f'{col} = {self.placeholder}' for col in columns])
         logger.info(f'#### sql: {sql}')
         return sql
