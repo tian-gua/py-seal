@@ -1,7 +1,6 @@
 from datetime import datetime
 from ._mysql_connector import MysqlConnector
 from ..table_info import TableInfo
-from ... import cache
 from loguru import logger
 
 
@@ -9,10 +8,6 @@ class Meta:
 
     @staticmethod
     def get_table_info(table: str) -> TableInfo:
-        table_info_cache = cache.get(f'table_info_{table}')
-        if table_info_cache is not None:
-            return table_info_cache
-
         conn = MysqlConnector().get_connection()
         c = conn.cursor()
         try:
@@ -36,7 +31,6 @@ class Meta:
                 else:
                     table_info.model_fields.append((field_name, str))
             logger.debug(f'获取表{table}的结构信息：{table_info}')
-            cache.set(f'table_info_{table}', table_info)
             return table_info
         finally:
             c.close()

@@ -165,7 +165,7 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
                 record['create_by'] = WebContext().uid()
             if 'create_at' in insert_columns:
                 record['create_at'] = now
-            args = tuple([record[col] for col in insert_columns])
+            args = tuple([record.get(col, None) for col in insert_columns])
         else:
             if isinstance(record, BaseEntity):
                 record.deleted = 0

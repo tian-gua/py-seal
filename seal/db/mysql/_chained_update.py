@@ -60,7 +60,7 @@ class ChainedUpdate(BaseChainedUpdate):
                         record['create_by'] = WebContext().uid()
                     if 'create_at' in insert_columns:
                         record['create_at'] = now
-                    args = [record[col] for col in insert_columns]
+                    args = [record.get(col, None) for col in insert_columns]
                 else:
                     if isinstance(record, BaseEntity):
                         record.deleted = 0
