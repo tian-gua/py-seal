@@ -2,14 +2,18 @@ import threading
 import asyncio
 from ._ws_dispatcher import dispatcher
 from websockets.server import serve
+from websockets.exceptions import ConnectionClosed
 from .. import seal
 from loguru import logger
 
 
 async def dispatch(websocket):
     path = websocket.path
-    async for message in websocket:
-        await dispatcher.dispatch(path)(message, websocket)
+    try:
+        async for message in websocket:
+            await dispatcher.dispatch(path)(message, websocket)
+    except ConnectionClosed:
+        await dispatcher.dispatch(path)(None, websocket, close=True)
 
 
 async def start_server():
