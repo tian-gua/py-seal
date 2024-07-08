@@ -31,7 +31,8 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         self._where: list[tuple] = [(logic_delete_col if logic_delete_col is not None else 'deleted', 0, '=')]
         self._columns = ()
         self._sorts = ()
-        self._limit = None
+        self._limit: int | None = None
+        self._group_by = ()
         self._raw = None
         self._ignore_columns = ()
         self.placeholder = placeholder
@@ -60,6 +61,10 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         order_by = ', '.join(f'{sort[0]} {sort[1]}' for sort in self._sorts)
         order_by = '' if len(self._sorts) == 0 else f'order by {order_by}'
         return order_by
+
+    def build_group_by(self):
+        group_by = ', '.join(self._group_by)
+        return '' if len(self._group_by) == 0 else f'group by {group_by}'
 
     def raw(self, raw_sql: str):
         self._raw = raw_sql
@@ -113,16 +118,24 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
         self._where.append((col, f'%{value}%', 'like'))
         return self
 
-    def limit(self, limit):
+    def limit(self, limit: int):
         self._limit = limit
         return self
 
-    def sort(self, *sorts):
+    def sort(self, col: str, order='asc'):
+        self._sorts = [(col, order)]
+        return self
+
+    def sorts(self, *sorts):
         self._sorts = sorts
         return self
 
+    def group_by(self, col: str):
+        self._group_by = col
+        return self
+
     def count_statement(self) -> tuple[str, tuple]:
-        sql = f'SELECT count(1) FROM {self.table} {self.build_where()}'
+        sql = f'SELECT count(1) FROM {self.table} {self.build_where()} {self.build_group_by()}'
         args = self.build_args()
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')
@@ -130,7 +143,7 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
 
     def select_statement(self) -> tuple[str, tuple]:
         limit = '' if self._limit is None else f'limit {self._limit}'
-        sql = f'SELECT {self.build_select()} FROM {self.table} {self.build_where()} {self.build_order_by()} {limit}'
+        sql = f'SELECT {self.build_select()} FROM {self.table} {self.build_where()} {self.build_group_by()} {self.build_order_by()} {limit}'
         args = self.build_args()
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')
@@ -138,14 +151,14 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
 
     def page_statement(self, page: int, page_size: int) -> tuple[str, tuple]:
         limit = f'limit {page_size} offset {(page - 1) * page_size}'
-        sql = f'SELECT {self.build_select()} FROM {self.table} {self.build_where()} {self.build_order_by()} {limit}'
+        sql = f'SELECT {self.build_select()} FROM {self.table} {self.build_where()} {self.build_group_by()} {self.build_order_by()} {limit}'
         args = self.build_args()
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')
         return sql, args
 
     def mapping_statement(self) -> tuple[str, tuple]:
-        sql = f'{self._raw} {self.build_where()}'
+        sql = f'{self._raw} {self.build_where()} {self.build_group_by()} {self.build_order_by()}'
         args = self.build_args()
         logger.info(f'#### sql: {sql}')
         logger.info(f'#### args: {args}')

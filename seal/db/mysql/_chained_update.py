@@ -1,6 +1,6 @@
 import traceback
 
-from ._mysql_connector import MysqlConnector
+from ._connection_pool import ConnectionPool
 from ._meta import Meta
 from .._base_chained_update import BaseChainedUpdate
 from ...context import WebContext
@@ -16,7 +16,8 @@ class ChainedUpdate(BaseChainedUpdate):
 
     def __init__(self, target, logic_delete_col: str = None):
         super().__init__(target, logic_delete_col, '%s')
-        self._conn = MysqlConnector().get_connection()
+        # self._conn = MysqlConnector().get_connection()
+        self._conn = ConnectionPool().get_connection()
 
     def _get_cursor(self):
         return self._conn.cursor()
