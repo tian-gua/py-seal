@@ -8,7 +8,7 @@ def group(lst, key):
             val = item[key]
         else:
             val = getattr(item, key)
-        if item[key] not in grouped:
+        if val not in grouped:
             grouped[val] = []
         grouped[val].append(item)
     return grouped

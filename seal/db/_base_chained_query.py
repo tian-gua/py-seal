@@ -1,5 +1,7 @@
 import abc
-from collections import namedtuple
+from dataclasses import make_dataclass, fields, field
+from typing import Any
+
 from loguru import logger
 
 from .table_info import TableInfo
@@ -20,9 +22,8 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
             self.table = target
             if not dynamic_models.has(target):
                 table_info: TableInfo = self.meta().get_table_info(self.table)
-                dynamic_model = namedtuple(target,
-                                           [col[0] for col in table_info.columns],
-                                           defaults=(None,) * len(table_info.columns))
+                dynamic_model = make_dataclass(target,
+                                               [(col[0], Any, field(default=None)) for col in table_info.columns])
                 dynamic_models.register(target, dynamic_model)
                 self.clz = dynamic_model
             else:
@@ -42,7 +43,7 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
             return self._columns
         if issubclass(self.clz, BaseEntity):
             return [col for col in self.clz.columns() if col not in self._ignore_columns]
-        return [key for key in self.clz._fields if key not in self._ignore_columns]
+        return [field.name for field in fields(self.clz) if field.name not in self._ignore_columns]
 
     def build_select(self):
         return ', '.join(self.columns())
