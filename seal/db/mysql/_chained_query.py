@@ -32,7 +32,7 @@ class ChainedQuery(BaseChainedQuery):
             if reuse_conn is False:
                 self._conn.close()
 
-    def list(self, to_dict: False, reuse_conn: bool = False):
+    def list(self, to_dict: bool = False, reuse_conn: bool = False):
         c = self._get_cursor()
         try:
             sql, args = self.select_statement()
@@ -46,7 +46,7 @@ class ChainedQuery(BaseChainedQuery):
             if reuse_conn is False:
                 self._conn.close()
 
-    def page(self, page: int = 1, page_size: int = 10, to_dict=False, reuse_conn=False) -> PageResult:
+    def page(self, page: int = 1, page_size: int = 10, to_dict: bool = False, reuse_conn=False) -> PageResult:
         c = self._get_cursor()
         try:
             sql, args = self.page_statement(page, page_size)
