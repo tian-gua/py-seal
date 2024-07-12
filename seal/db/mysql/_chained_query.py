@@ -27,6 +27,7 @@ class ChainedQuery(BaseChainedQuery):
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -41,6 +42,7 @@ class ChainedQuery(BaseChainedQuery):
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -57,6 +59,7 @@ class ChainedQuery(BaseChainedQuery):
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -71,6 +74,7 @@ class ChainedQuery(BaseChainedQuery):
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -85,6 +89,7 @@ class ChainedQuery(BaseChainedQuery):
         except Exception as e:
             logger.error(f'数据库操作异常: {e}')
             logger.error(traceback.format_exc())
+            raise e
         finally:
             c.close()
             if reuse_conn is False:

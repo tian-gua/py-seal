@@ -138,31 +138,31 @@ class BaseChainedQuery(metaclass=abc.ABCMeta):
     def count_statement(self) -> tuple[str, tuple]:
         sql = f'SELECT count(1) FROM {self.table} {self.build_where()} {self.build_group_by()}'
         args = self.build_args()
-        logger.info(f'#### sql: {sql}')
-        logger.info(f'#### args: {args}')
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
         return sql, args
 
     def select_statement(self) -> tuple[str, tuple]:
         limit = '' if self._limit is None else f'limit {self._limit}'
         sql = f'SELECT {self.build_select()} FROM {self.table} {self.build_where()} {self.build_group_by()} {self.build_order_by()} {limit}'
         args = self.build_args()
-        logger.info(f'#### sql: {sql}')
-        logger.info(f'#### args: {args}')
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
         return sql, args
 
     def page_statement(self, page: int, page_size: int) -> tuple[str, tuple]:
         limit = f'limit {page_size} offset {(page - 1) * page_size}'
         sql = f'SELECT {self.build_select()} FROM {self.table} {self.build_where()} {self.build_group_by()} {self.build_order_by()} {limit}'
         args = self.build_args()
-        logger.info(f'#### sql: {sql}')
-        logger.info(f'#### args: {args}')
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
         return sql, args
 
     def mapping_statement(self) -> tuple[str, tuple]:
         sql = f'{self._raw} {self.build_where()} {self.build_group_by()} {self.build_order_by()}'
         args = self.build_args()
-        logger.info(f'#### sql: {sql}')
-        logger.info(f'#### args: {args}')
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
         return sql, args
 
     def fetchall(self, cursor, to_dict: bool = False) -> list:

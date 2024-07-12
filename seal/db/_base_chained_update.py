@@ -98,8 +98,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
 
         sql = f'DELETE FROM {self.table} {self.build_where()}'
         args = self.build_args()
-        logger.info(f'#### sql: {sql}')
-        logger.info(f'#### args: {args}')
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
         return sql, args
 
     def update_statement(self) -> tuple[str, tuple]:
@@ -114,8 +114,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         self.sets['update_at'] = datetime.now()
         sql = f'UPDATE {self.table} SET {", ".join([f"{col} = {self.placeholder}" for col in self.sets.keys()])} {self.build_where()}'
         args = tuple(self.sets.values()) + self.build_args()
-        logger.info(f'#### sql: {sql}')
-        logger.info(f'#### args: {args}')
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
         return sql, args
 
     def update_by_pk_statement(self, record) -> tuple[str, tuple]:
@@ -148,8 +148,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
 
         sets = [f'{col} = {self.placeholder}' for col in valid_columns]
         sql = f'UPDATE {self.table} SET {", ".join(sets)} where id = {self.placeholder}'
-        logger.info(f'#### sql: {sql}')
-        logger.info(f'#### args: {args}')
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
         return sql, args
 
     def insert_statement(self, record, duplicated_ignore=False, duplicated_key_update=False) -> tuple[str, tuple]:
@@ -190,8 +190,8 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
             sql += ', '.join([f'{col} = {self.placeholder}' for col in self.columns(exclude=["id"])])
         if duplicated_key_update:
             args += args
-        logger.info(f'#### sql: {sql}')
-        logger.info(f'#### args: {args}')
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
         return sql, args
 
     def insert_bulk_statement(self, duplicated_ignore=False, duplicated_key_update=False) -> str:
@@ -202,5 +202,5 @@ class BaseChainedUpdate(metaclass=abc.ABCMeta):
         if duplicated_key_update:
             sql += f'{" ON DUPLICATE KEY UPDATE " if duplicated_key_update else ""}'
             sql += ', '.join([f'{col} = {self.placeholder}' for col in columns])
-        logger.info(f'#### sql: {sql}')
+        logger.debug(f'#### sql: {sql}')
         return sql
