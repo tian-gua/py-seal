@@ -1,5 +1,4 @@
 import traceback
-from typing import Any
 
 from ._meta import Meta
 from ._sqlite_connector import SqliteConnector

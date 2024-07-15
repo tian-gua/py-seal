@@ -1,3 +1,4 @@
+import asyncio
 import time
 import re
 import traceback
@@ -62,7 +63,8 @@ def response_body(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
-            result = await func(*args, **kwargs)
+            task = asyncio.create_task(func(*args, **kwargs))
+            result = await task
             return ResponseModel.build(result).success()
         except BusinessException as e:
             logger.error(f'{e.message}')
