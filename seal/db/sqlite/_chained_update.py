@@ -1,5 +1,3 @@
-import traceback
-
 from ._meta import Meta
 from ._sqlite_connector import SqliteConnector
 from .._base_chained_update import BaseChainedUpdate
@@ -32,8 +30,8 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -76,8 +74,8 @@ class ChainedUpdate(BaseChainedUpdate):
                 c.execute(sql, tuple(args))
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -91,8 +89,8 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -105,8 +103,8 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -119,8 +117,8 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:

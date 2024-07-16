@@ -1,5 +1,3 @@
-import traceback
-
 from ._connection_pool import ConnectionPool
 from ._meta import Meta
 from .._base_chained_update import BaseChainedUpdate
@@ -35,8 +33,7 @@ class ChainedUpdate(BaseChainedUpdate):
             logger.debug(f'#### affected: {affected}')
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
@@ -85,8 +82,7 @@ class ChainedUpdate(BaseChainedUpdate):
             logger.debug(f'#### affected: {total_affected}')
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
@@ -101,8 +97,7 @@ class ChainedUpdate(BaseChainedUpdate):
             logger.debug(f'#### affected: {affected}')
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
@@ -117,8 +112,7 @@ class ChainedUpdate(BaseChainedUpdate):
             logger.debug(f'#### affected: {affected}')
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
@@ -133,8 +127,7 @@ class ChainedUpdate(BaseChainedUpdate):
             logger.debug(f'#### affected: {affected}')
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()

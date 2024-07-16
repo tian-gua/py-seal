@@ -1,4 +1,3 @@
-import traceback
 from ._connection_pool import ConnectionPool
 from ._meta import Meta
 from .._base_chained_query import BaseChainedQuery
@@ -25,8 +24,7 @@ class ChainedQuery(BaseChainedQuery):
             c.execute(sql, args)
             return c.fetchone()[0]
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
@@ -40,8 +38,7 @@ class ChainedQuery(BaseChainedQuery):
             c.execute(sql, args)
             return self.fetchall(c, to_dict=to_dict)
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
@@ -57,8 +54,7 @@ class ChainedQuery(BaseChainedQuery):
             total = self.count(reuse_conn=True)
             return PageResult(page=page, page_size=page_size, total=total, data=entities)
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
@@ -72,8 +68,7 @@ class ChainedQuery(BaseChainedQuery):
             c.execute(sql, args)
             return self.fetchone(c, to_dict=to_dict)
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
@@ -87,8 +82,7 @@ class ChainedQuery(BaseChainedQuery):
             c.execute(sql, args)
             return self.fetchall(c, to_dict=to_dict)
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             raise e
         finally:
             c.close()
