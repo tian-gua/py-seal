@@ -18,8 +18,10 @@
 - [x] loguru
 - [x] sqlite
 - [x] mysql
+- [x] mysql 连接池
 - [x] cache
 - [x] schedule
+
 
 
 ## 安装

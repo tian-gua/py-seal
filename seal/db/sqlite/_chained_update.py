@@ -1,5 +1,3 @@
-import traceback
-
 from ._meta import Meta
 from ._sqlite_connector import SqliteConnector
 from .._base_chained_update import BaseChainedUpdate
@@ -32,14 +30,14 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
                 self._conn.close()
 
-    def insert_bulk(self, records: list[dict] = None, duplicated_ignore: bool = False, reuse_conn: bool = False):
+    def insert_bulk(self, records, duplicated_ignore: bool = False, reuse_conn: bool = False):
         if records is None:
             raise ValueError('null data')
 
@@ -72,12 +70,12 @@ class ChainedUpdate(BaseChainedUpdate):
                             record.create_at = now
                     args = [getattr(record, col) for col in insert_columns]
 
-                logger.info(f'#### args: {args}')
+                logger.debug(f'#### args: {args}')
                 c.execute(sql, tuple(args))
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -91,8 +89,8 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -105,8 +103,8 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:
@@ -119,8 +117,8 @@ class ChainedUpdate(BaseChainedUpdate):
             c.execute(sql, args)
             self._conn.commit()
         except Exception as e:
-            logger.error(f'数据库操作异常: {e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
+            raise e
         finally:
             c.close()
             if reuse_conn is False:

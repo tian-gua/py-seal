@@ -2,7 +2,6 @@ import schedule
 from schedule import Job
 import time
 from loguru import logger
-import traceback
 
 
 class JobManager:
@@ -25,7 +24,7 @@ class JobManager:
                             error_func()
                         except Exception as e:
                             logger.error(f'job {name} error_func error: {e}')
-                            logger.error(traceback.format_exc())
+                            logger.exception(e)
                 else:
                     logger.info(f'job {name} success')
                     if success_func:
@@ -33,10 +32,10 @@ class JobManager:
                             success_func()
                         except Exception as e:
                             logger.error(f'job {name} success_func error: {e}')
-                            logger.error(traceback.format_exc())
+                            logger.exception(e)
             except Exception as e:
                 logger.error(f'job {name} error: {e}')
-                logger.error(traceback.format_exc())
+                logger.exception(e)
 
         self._jobs[name] = {}
         self._jobs[name]['job'] = job

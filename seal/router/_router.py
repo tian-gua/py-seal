@@ -1,6 +1,6 @@
+import asyncio
 import time
 import re
-import traceback
 from functools import wraps
 import jwt
 from fastapi import FastAPI, Request, Response, HTTPException, Depends
@@ -62,14 +62,14 @@ def response_body(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
-            result = await func(*args, **kwargs)
+            task = asyncio.create_task(func(*args, **kwargs))
+            result = await task
             return ResponseModel.build(result).success()
         except BusinessException as e:
-            logger.error(f'{e.message}')
+            logger.exception(e)
             return ResponseModel.build().error(message=e.message, code=e.code)
         except Exception as e:
-            logger.error(f'{e}')
-            logger.error(traceback.format_exc())
+            logger.exception(e)
             return ResponseModel.build().error(message=str(e))
 
     return wrapper

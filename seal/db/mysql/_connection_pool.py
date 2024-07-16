@@ -71,3 +71,6 @@ class DelegateConnection:
 
     def occupy(self):
         self.status = 'occupied'
+
+    def commit(self):
+        self._connection.commit()
