@@ -22,7 +22,7 @@ class ChainedQuery(BaseChainedQuery):
         try:
             sql, args = self.count_statement()
             c.execute(sql, args)
-            return c.fetchone()[0]
+            return c.fetchone()['count(1)']
         except Exception as e:
             logger.exception(e)
             raise e
