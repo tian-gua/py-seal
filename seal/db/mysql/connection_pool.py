@@ -1,18 +1,29 @@
 import time
-from ... import seal
-
-from ._mysql_connector import MysqlConnector
+import pymysql
 
 
 class ConnectionPool:
-    def __init__(self):
+    def __init__(self, conf):
+        self.conf = conf
+
         self._connections: list[DelegateConnection] = []
-        self._min_connections = seal.get_config('seal', 'mysql', 'pool', 'min_connections')
-        self._max_connections = seal.get_config('seal', 'mysql', 'pool', 'max_connections')
+        self._min_connections = conf['pool']['min_connections']
+        self._max_connections = conf['pool']['max_connections']
 
         for _ in range(self._min_connections):
-            mysql_connection = MysqlConnector().get_connection()
+            mysql_connection = pymysql.connect(host=conf['host'],
+                                               user=conf['user'],
+                                               password=conf['password'],
+                                               database=conf['database'],
+                                               cursorclass=pymysql.cursors.DictCursor)
             self._connections.append(DelegateConnection(mysql_connection, self))
+
+    def new_connection(self):
+        return pymysql.connect(host=self.conf['host'],
+                               user=self.conf['user'],
+                               password=self.conf['password'],
+                               database=self.conf['database'],
+                               cursorclass=pymysql.cursors.DictCursor)
 
     def get_connection(self, timeout=None):
         start_time = time.time()
@@ -22,7 +33,7 @@ class ConnectionPool:
             return connection
 
         if len(self._connections) < self._max_connections:
-            mysql_connection = MysqlConnector().get_connection()
+            mysql_connection = self.new_connection()
             connection = DelegateConnection(mysql_connection, self)
             connection.occupy()
             self._connections.append(connection)
@@ -64,7 +75,7 @@ class DelegateConnection:
         self.create_time = create_time
 
     def close(self):
-        self.pool.release(self._connection)
+        self.pool.release(self)
 
     def cursor(self):
         return self._connection.cursor()
