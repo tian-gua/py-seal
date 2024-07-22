@@ -22,7 +22,7 @@ class QueryWrapper(BaseWrapper):
         self.ignore_fields = field_list
         return self
 
-    def order_by(self, *order_by):
+    def sort(self, *order_by):
         self.order_by = order_by
         return self
 

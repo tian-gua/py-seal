@@ -13,8 +13,13 @@ class InsertWrapper:
         if data is None:
             raise ValueError('null data')
 
-        self.insert_fields = [f for f in fields(self.param_type) if
-                              f.name != 'id' and getattr(data, f.name) is not None]
+        if isinstance(data, dict):
+            keys = data.keys()
+            self.insert_fields = [f.name for f in fields(self.param_type) if
+                                  f.name != 'id' and f.name in keys]
+        else:
+            self.insert_fields = [f.name for f in fields(self.param_type) if
+                                  f.name != 'id' and getattr(data, f.name) is not None]
 
         if 'duplicated_key_update' in options:
             sql, args = build_insert(self, data, options['duplicated_key_update'])
@@ -26,8 +31,14 @@ class InsertWrapper:
         if data_list is None or len(data_list) == 0:
             raise ValueError('null data')
 
-        self.insert_fields = [f for f in fields(self.param_type) if
-                              f.name != 'id' and getattr(data_list[0], f.name) is not None]
+        data = data_list[0]
+        if isinstance(data, dict):
+            keys = data.keys()
+            self.insert_fields = [f.name for f in fields(self.param_type) if
+                                  f.name != 'id' and f.name in keys]
+        else:
+            self.insert_fields = [f.name for f in fields(self.param_type) if
+                                  f.name != 'id' and getattr(data_list[0], f.name) is not None]
 
         if 'duplicated_key_update' in options:
             sql, args = build_insert_bulk(self, data_list, duplicated_key_update=options['duplicated_key_update'])

@@ -61,12 +61,20 @@ def build_delete(update_wrapper) -> (str, tuple):
 
 
 def build_insert(insert_wrapper, data, duplicated_key_update=False, duplicated_key_ignore=False) -> (str, tuple):
-    sql = f'INSERT {"OR IGNORE" if duplicated_key_ignore else ""} INTO {insert_wrapper.table} ({",".join([field.name for field in insert_wrapper.insert_fields])}) VALUES ({",".join(["?" for _ in insert_wrapper.insert_fields])})'
-    if duplicated_key_update:
-        sql += f' ON DUPLICATE KEY UPDATE {",".join([f"{field.name}=?" for field in insert_wrapper.insert_fields])}'
-        args = tuple([getattr(data, field.name) for field in insert_wrapper.insert_fields]) * 2
+    keys = None
+    if isinstance(data, dict):
+        keys = data.keys()
+
+    sql = f'INSERT {"OR IGNORE" if duplicated_key_ignore else ""} INTO {insert_wrapper.table} ({",".join([field for field in insert_wrapper.insert_fields if keys is None or field in keys])}) VALUES ({",".join(["?" for field in insert_wrapper.insert_fields if keys is None or field in keys])})'
+
+    if isinstance(data, dict):
+        args = tuple([data[field] for field in insert_wrapper.insert_fields if field in keys])
     else:
-        args = tuple([getattr(data, field.name) for field in insert_wrapper.insert_fields])
+        args = tuple([getattr(data, field) for field in insert_wrapper.insert_fields])
+
+    if duplicated_key_update:
+        sql += f' ON DUPLICATE KEY UPDATE {",".join([f"{field}=?" for field in insert_wrapper.insert_fields if keys is None or field in keys])}'
+        args = args * 2
     logger.debug(f'#### sql: {sql}')
     logger.debug(f'#### args: {args}')
     return sql, args
@@ -74,14 +82,28 @@ def build_insert(insert_wrapper, data, duplicated_key_update=False, duplicated_k
 
 def build_insert_bulk(insert_wrapper, data_list, duplicated_key_update=False, duplicated_key_ignore=False) -> (
         str, list[tuple]):
-    sql = f'INSERT {"OR IGNORE" if duplicated_key_ignore else ""} INTO {insert_wrapper.table} ({",".join([field.name for field in insert_wrapper.insert_fields])}) VALUES ({",".join(["?" for _ in insert_wrapper.insert_fields])})'
-    if duplicated_key_update:
-        sql += f' ON DUPLICATE KEY UPDATE {",".join([f"{field.name}=?" for field in insert_wrapper.insert_fields])}'
+    keys = None
+    data = data_list[0]
+    if isinstance(data, dict):
+        keys = data.keys()
+
+    sql = f'INSERT {"OR IGNORE" if duplicated_key_ignore else ""} INTO {insert_wrapper.table} ({",".join([field for field in insert_wrapper.insert_fields if keys is None or field in keys])}) VALUES ({",".join(["?" for field in insert_wrapper.insert_fields if keys is None or field in keys])})'
 
     if duplicated_key_update:
-        args = [tuple([getattr(data, f.name) for f in insert_wrapper.insert_fields]) * 2 for data in data_list]
+        sql += f' ON DUPLICATE KEY UPDATE {",".join([f"{field}=?" for field in insert_wrapper.insert_fields])}'
+
+    if duplicated_key_update:
+        if isinstance(data, dict):
+            args = [tuple([data[field] for field in insert_wrapper.insert_fields if field in keys]) * 2 for data in
+                    data_list]
+        else:
+            args = [tuple([getattr(data, field) for field in insert_wrapper.insert_fields]) * 2 for data in data_list]
     else:
-        args = [tuple([getattr(data, f.name) for f in insert_wrapper.insert_fields]) for data in data_list]
+        if isinstance(data, dict):
+            args = [tuple([data[field] for field in insert_wrapper.insert_fields if field in keys]) for data
+                    in data_list]
+        else:
+            args = [tuple([getattr(data, field) for field in insert_wrapper.insert_fields]) for data in data_list]
     logger.debug(f'#### sql: {sql}')
     logger.debug(f'#### args: {args}')
     return sql, args

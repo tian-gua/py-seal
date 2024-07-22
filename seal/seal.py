@@ -55,13 +55,22 @@ class Seal:
             raise ValueError('Seal 未初始化')
         return self.configuration.get_conf(*keys)
 
-    def qw(self, table):
+    def q(self, table):
         return QueryWrapper(table, self.default_data_source, self.logical_delete)
 
-    def uw(self, table):
+    def query_wrapper(self, table):
+        return QueryWrapper(table, self.default_data_source, self.logical_delete)
+
+    def u(self, table):
         return UpdateWrapper(table, self.default_data_source, self.logical_delete)
 
-    def iw(self, table):
+    def update_wrapper(self, table):
+        return UpdateWrapper(table, self.default_data_source, self.logical_delete)
+
+    def i(self, table):
+        return InsertWrapper(table, self.default_data_source)
+
+    def insert_wrapper(self, table):
         return InsertWrapper(table, self.default_data_source)
 
     def raw(self, sql, args=()):
