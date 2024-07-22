@@ -1,11 +1,13 @@
-from .base_wrapper import BaseWrapper
+from .wrapper import Wrapper
 from .sql_builder import build_update, build_delete
 
 
-class UpdateWrapper(BaseWrapper):
+class UpdateWrapper(Wrapper):
 
     def __init__(self, table, data_source, logical_delete=None):
-        super().__init__(table, data_source, logical_delete=logical_delete)
+        super().__init__(logical_delete=logical_delete)
+        self.table = table
+        self.data_source = data_source
         self.update_fields = {}
 
     def set(self, field, value):

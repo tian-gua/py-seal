@@ -2,6 +2,7 @@ from .config import Configuration
 from .db.query_wrapper import QueryWrapper
 from .db.update_wrapper import UpdateWrapper
 from .db.insert_wrapper import InsertWrapper
+from .db.wrapper import Wrapper
 from loguru import logger
 
 
@@ -72,6 +73,9 @@ class Seal:
 
     def insert_wrapper(self, table):
         return InsertWrapper(table, self.default_data_source)
+
+    def wrapper(self):
+        return Wrapper(self.logical_delete)
 
     def raw(self, sql, args=()):
         return self.default_data_source.get_executor().raw(sql, args)

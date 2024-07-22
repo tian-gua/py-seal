@@ -1,12 +1,14 @@
-from .base_wrapper import BaseWrapper
+from .wrapper import Wrapper
 from .data_source import DataSource
 from .sql_builder import build_select, build_count
 from dataclasses import fields
 
 
-class QueryWrapper(BaseWrapper):
+class QueryWrapper(Wrapper):
     def __init__(self, table: str, data_source: DataSource, logical_delete=None):
-        super().__init__(table, data_source, logical_delete=logical_delete)
+        super().__init__(logical_delete=logical_delete)
+        self.table = table
+        self.data_source = data_source
         self.result_type = data_source.get_data_structure(table)
         self.limit = None
         self.offset = None

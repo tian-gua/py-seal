@@ -13,6 +13,10 @@ class ConditionTree:
         self.conditions = []
         self.logic = logic
 
+    def or_(self):
+        self.logic = 'or'
+        return self
+
     def add_condition(self, condition: Condition):
         self.conditions.append(condition)
         return self

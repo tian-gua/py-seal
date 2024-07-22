@@ -1,12 +1,10 @@
 from .condition import ConditionTree, Condition
-from .data_source import DataSource
+from typing import Self
 
 
-class BaseWrapper:
-    def __init__(self, table: str, data_source: DataSource, logical_delete=None):
-        self.table = table
+class Wrapper:
+    def __init__(self, logical_delete=None):
         self.condition_tree = ConditionTree()
-        self.data_source = data_source
         self.logical_delete = logical_delete
 
     def eq(self, field, value):
@@ -49,7 +47,8 @@ class BaseWrapper:
         self.condition_tree.add_condition(Condition(field, f'%{value}%', 'like'))
         return self
 
-    def or_(self, wrapper):
+    def or_(self, wrapper: Self):
+        wrapper.condition_tree.or_()
         self.condition_tree.add_tree(wrapper.condition_tree)
         return self
 
