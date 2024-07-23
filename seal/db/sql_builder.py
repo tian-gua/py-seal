@@ -1,3 +1,5 @@
+from typing import Tuple, Callable, Any, Generator
+
 from loguru import logger
 
 
@@ -107,3 +109,26 @@ def build_insert_bulk(insert_wrapper, data_list, duplicated_key_update=False, du
     logger.debug(f'#### sql: {sql}')
     logger.debug(f'#### args: {args}')
     return sql, args
+
+
+def build_insert_iterator(insert_wrapper, data_list, duplicated_key_update=False, duplicated_key_ignore=False):
+    keys = None
+    if isinstance(data_list[0], dict):
+        keys = data_list[0].keys()
+
+    sql = f'INSERT {"OR IGNORE" if duplicated_key_ignore else ""} INTO {insert_wrapper.table} ({",".join([field for field in insert_wrapper.insert_fields if keys is None or field in keys])}) VALUES ({",".join(["?" for field in insert_wrapper.insert_fields if keys is None or field in keys])})'
+
+    if duplicated_key_update:
+        sql += f' ON DUPLICATE KEY UPDATE {",".join([f"{field}=?" for field in insert_wrapper.insert_fields])}'
+
+    def data_iterator(callback):
+        for data in data_list:
+            if isinstance(data, dict):
+                args = tuple([data[field] for field in insert_wrapper.insert_fields if field in keys])
+            else:
+                args = tuple([getattr(data, field) for field in insert_wrapper.insert_fields])
+            logger.debug(f'#### args: {args}')
+            callback(sql, args)
+
+    logger.debug(f'#### sql: {sql}')
+    return data_iterator

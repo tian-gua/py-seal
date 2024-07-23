@@ -1,5 +1,5 @@
 from dataclasses import fields
-from .sql_builder import build_insert, build_insert_bulk
+from .sql_builder import build_insert, build_insert_bulk, build_insert_iterator
 
 
 class InsertWrapper:
@@ -31,9 +31,8 @@ class InsertWrapper:
         if data_list is None or len(data_list) == 0:
             raise ValueError('null data')
 
-        data = data_list[0]
-        if isinstance(data, dict):
-            keys = data.keys()
+        if isinstance(data_list[0], dict):
+            keys = data_list[0].keys()
             self.insert_fields = [f.name for f in fields(self.param_type) if
                                   f.name != 'id' and f.name in keys]
         else:
@@ -47,3 +46,18 @@ class InsertWrapper:
         else:
             sql, args = build_insert_bulk(self, data_list)
         return self.data_source.get_executor().insert_bulk(sql, args)
+
+    def insert_iterator(self, data_list, **options):
+        if data_list is None or len(data_list) == 0:
+            raise ValueError('null data')
+
+        if isinstance(data_list[0], dict):
+            keys = data_list[0].keys()
+            self.insert_fields = [f.name for f in fields(self.param_type) if
+                                  f.name != 'id' and f.name in keys]
+        else:
+            self.insert_fields = [f.name for f in fields(self.param_type) if
+                                  f.name != 'id' and getattr(data_list[0], f.name) is not None]
+
+        data_iterator = build_insert_iterator(self, data_list, **options)
+        return self.data_source.get_executor().insert_interator(data_iterator)

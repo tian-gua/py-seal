@@ -118,3 +118,17 @@ class SqliteExecutor(Executor):
         finally:
             cursor.close()
             connection.close()
+
+    def insert_interator(self, data_iterator):
+        connection = self.data_source.get_connection()
+        cursor = connection.cursor()
+        try:
+            data_iterator(lambda sql, args: cursor.execute(sql, args))
+            connection.commit()
+            return cursor.rowcount
+        except Exception as e:
+            logger.exception(e)
+            raise e
+        finally:
+            cursor.close()
+            connection.close()

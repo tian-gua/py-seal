@@ -1,3 +1,4 @@
+import functools
 from abc import ABC
 from .table_info import TableField, TableInfo
 from ..data_source import DataSource
@@ -14,6 +15,7 @@ class MysqlDataSource(DataSource, ABC):
     def get_connection(self):
         return self.connection_pool.get_connection(10)
 
+    @functools.lru_cache(maxsize=128)
     def get_data_structure(self, table):
         if table in self.table_info_dict:
             return self.table_info_dict[table].parse_model()

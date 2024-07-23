@@ -1,3 +1,4 @@
+import functools
 import sqlite3
 from abc import ABC
 from .table_info import TableField, TableInfo
@@ -14,6 +15,7 @@ class SqliteDataSource(DataSource, ABC):
     def get_connection(self):
         return sqlite3.connect(self.src)
 
+    @functools.lru_cache(maxsize=128)
     def get_data_structure(self, table):
         if table in self.table_info_dict:
             return self.table_info_dict[table].parse_model()
