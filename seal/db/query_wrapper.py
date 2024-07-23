@@ -36,11 +36,11 @@ class QueryWrapper(Wrapper):
         self.offset = offset
         return self
 
-    def find_one(self, **options):
+    def find(self, **options):
         self._handle_logical_delete(**options)
 
         sql, args = self._build_select()
-        return self.data_source.get_executor().find_one(sql, args, self.field_list, self.result_type, **options)
+        return self.data_source.get_executor().find(sql, args, self.field_list, self.result_type, **options)
 
     def find_list(self, **options):
         self._handle_logical_delete(**options)

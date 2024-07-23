@@ -1,5 +1,6 @@
 from .wrapper import Wrapper
 from .sql_builder import build_update, build_delete
+from dataclasses import fields
 
 
 class UpdateWrapper(Wrapper):
@@ -12,6 +13,19 @@ class UpdateWrapper(Wrapper):
 
     def set(self, field, value):
         self.update_fields[field] = value
+        return self
+
+    def set_model(self, entity):
+        if isinstance(entity, dict):
+            for field in fields(self.data_source.get_data_structure(self.table)):
+                if field.name != 'id' and field.name in entity:
+                    self.update_fields[field.name] = entity[field.name]
+            return self
+
+        for field in fields(entity):
+            if field.name != 'id':
+                continue
+            self.update_fields[field.name] = getattr(entity, field.name)
         return self
 
     def update(self, **options):

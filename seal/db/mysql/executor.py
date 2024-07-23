@@ -8,7 +8,7 @@ class MysqlExecutor(Executor):
     def __init__(self, data_source: DataSource):
         super().__init__(data_source)
 
-    def find_one(self, sql, args, select_fields, result_type, **options):
+    def find(self, sql, args, select_fields, result_type, **options):
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
         cursor = connection.cursor()
