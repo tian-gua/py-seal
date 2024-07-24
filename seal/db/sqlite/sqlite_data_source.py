@@ -1,6 +1,7 @@
-import functools
 import sqlite3
 from abc import ABC
+from typing import Any, Dict
+
 from .table_info import TableField, TableInfo
 from .executor import SqliteExecutor
 from ..data_source import DataSource
@@ -9,16 +10,15 @@ from ..data_source import DataSource
 class SqliteDataSource(DataSource, ABC):
     def __init__(self, conf):
         self.src = conf['src']
-        self.table_info_dict = {}
+        self.models: Dict[str, Any] = {}
         self.executor = SqliteExecutor(self)
 
     def get_connection(self):
         return sqlite3.connect(self.src)
 
-    @functools.lru_cache(maxsize=128)
     def get_data_structure(self, table):
-        if table in self.table_info_dict:
-            return self.table_info_dict[table].parse_model()
+        if table in self.models:
+            return self.models[table]
 
         conn = self.get_connection()
         c = conn.cursor()
@@ -36,7 +36,8 @@ class SqliteDataSource(DataSource, ABC):
                 table_fields.append(table_field)
 
             table_info = TableInfo(table=table, table_fields=table_fields)
-            return table_info.parse_model()
+            self.models[table] = table_info.parse_model()
+            return self.models[table]
         finally:
             c.close()
             conn.close()

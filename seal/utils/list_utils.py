@@ -1,9 +1,9 @@
-def group(lst, key):
+def group(list_, key):
     """
     Group a list of dictionaries by a key.
     """
     grouped = {}
-    for item in lst:
+    for item in list_:
         if isinstance(item, dict):
             val = item[key]
         else:
