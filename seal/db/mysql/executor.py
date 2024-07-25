@@ -11,6 +11,7 @@ class MysqlExecutor(Executor):
     def find(self, sql, args, select_fields, result_type, **options):
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
+        connection.begin()
         cursor = connection.cursor()
         try:
             result = cursor.execute(sql, args)
@@ -29,11 +30,13 @@ class MysqlExecutor(Executor):
             raise e
         finally:
             cursor.close()
+            connection.commit()
             connection.close()
 
     def find_list(self, sql, args, select_fields, result_type, **options):
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
+        connection.begin()
         cursor = connection.cursor()
         try:
             result = cursor.execute(sql, args)
@@ -52,11 +55,13 @@ class MysqlExecutor(Executor):
             raise e
         finally:
             cursor.close()
+            connection.commit()
             connection.close()
 
     def count(self, sql, args):
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
+        connection.begin()
         cursor = connection.cursor()
         try:
             result = cursor.execute(sql, args)
@@ -73,16 +78,16 @@ class MysqlExecutor(Executor):
             raise e
         finally:
             cursor.close()
+            connection.commit()
             connection.close()
 
     def update(self, sql, args):
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
+        connection.begin()
         cursor = connection.cursor()
         try:
             result = cursor.execute(sql, args)
-            connection.commit()
-
             if result is None:
                 return None
             return result
@@ -91,16 +96,16 @@ class MysqlExecutor(Executor):
             raise e
         finally:
             cursor.close()
+            connection.commit()
             connection.close()
 
     def insert(self, sql, args):
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
+        connection.begin()
         cursor = connection.cursor()
         try:
             result = cursor.execute(sql, args)
-            connection.commit()
-
             if result is None:
                 return None
             return result
@@ -109,19 +114,21 @@ class MysqlExecutor(Executor):
             raise e
         finally:
             cursor.close()
+            connection.commit()
             connection.close()
 
     def insert_bulk(self, sql, args):
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
+        connection.begin()
         cursor = connection.cursor()
         try:
             for args in args:
                 cursor.execute(sql, args)
-            connection.commit()
         except Exception as e:
             logger.exception(e)
             raise e
         finally:
             cursor.close()
+            connection.commit()
             connection.close()

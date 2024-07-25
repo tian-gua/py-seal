@@ -59,17 +59,17 @@ class ConnectionPool:
                 return connection
         return None
 
-    def release(self, connection):
+    def release(self, delegate_connection):
         if len(self._connections) > self._min_connections:
-            connection.connection.close()
-            self._connections.remove(connection)
+            delegate_connection.connection.close()
+            self._connections.remove(delegate_connection)
         else:
-            connection.status = 'idle'
+            delegate_connection.status = 'idle'
 
 
 class DelegateConnection:
     def __init__(self, connection, pool, create_time=time.time()):
-        self._connection = connection
+        self.connection = connection
         self.pool = pool
         self.status = 'idle'
         self.create_time = create_time
@@ -78,10 +78,16 @@ class DelegateConnection:
         self.pool.release(self)
 
     def cursor(self):
-        return self._connection.cursor()
+        return self.connection.cursor()
 
     def occupy(self):
         self.status = 'occupied'
 
     def commit(self):
-        self._connection.commit()
+        self.connection.commit()
+
+    def rollback(self):
+        self.connection.rollback()
+
+    def begin(self):
+        self.connection.begin()
