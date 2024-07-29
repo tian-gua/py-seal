@@ -46,7 +46,7 @@ class QueryWrapper(Wrapper):
         self._handle_logical_delete(**options)
 
         sql, args = self._build_select()
-        return self.data_source.get_executor().find_list(sql, args, self.field_list, self.result_type)
+        return self.data_source.get_executor().find_list(sql, args, self.field_list, self.result_type, **options)
 
     def find_page(self, page: int, page_size: int, **options):
         self._handle_logical_delete(**options)
@@ -54,7 +54,7 @@ class QueryWrapper(Wrapper):
         self.limit = page_size
         self.offset = (page - 1) * page_size
         sql, args = self._build_select()
-        records = self.data_source.get_executor().find_list(sql, args, self.field_list, self.result_type)
+        records = self.data_source.get_executor().find_list(sql, args, self.field_list, self.result_type, **options)
         count = self.count()
         return records, count
 
