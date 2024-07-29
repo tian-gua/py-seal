@@ -42,9 +42,6 @@ def build_update(update_wrapper) -> (str, tuple):
         args += args2
     logger.debug(f'#### sql: {sql}')
     logger.debug(f'#### args: {args}')
-
-    if len(args) == 0:
-        raise ValueError('不支持全量更新')
     return sql, args
 
 
@@ -56,9 +53,6 @@ def build_delete(update_wrapper) -> (str, tuple):
         sql += ' WHERE ' + exp
     logger.debug(f'#### sql: {sql}')
     logger.debug(f'#### args: {args}')
-
-    if len(args) == 0:
-        raise ValueError('不支持全量更新')
     return sql, args
 
 

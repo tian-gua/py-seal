@@ -29,12 +29,18 @@ class UpdateWrapper(Wrapper):
         return self
 
     def update(self, **options):
+        if len(self.condition_tree.conditions) == 0:
+            raise ValueError('不支持全量更新')
+
         self._handle_logical_delete(**options)
 
         sql, args = build_update(self)
         return self.data_source.get_executor().update(sql, args)
 
     def delete(self, **options):
+        if len(self.condition_tree.conditions) == 0:
+            raise ValueError('不支持全量更新')
+
         self._handle_logical_delete(**options)
 
         if options.get('logical_delete', False):
