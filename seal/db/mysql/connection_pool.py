@@ -1,5 +1,7 @@
 import time
 import pymysql
+from pymysql.cursors import DictCursor
+from pymysql.connections import Connection as PyMySQLConnection
 
 
 class ConnectionPool:
@@ -11,11 +13,11 @@ class ConnectionPool:
         self._max_connections = conf['pool']['max_connections']
 
         for _ in range(self._min_connections):
-            mysql_connection = pymysql.connect(host=conf['host'],
-                                               user=conf['user'],
-                                               password=conf['password'],
-                                               database=conf['database'],
-                                               cursorclass=pymysql.cursors.DictCursor)
+            mysql_connection: PyMySQLConnection = pymysql.connect(host=conf['host'],
+                                                                  user=conf['user'],
+                                                                  password=conf['password'],
+                                                                  database=conf['database'],
+                                                                  cursorclass=DictCursor)
             self._connections.append(DelegateConnection(mysql_connection, self))
 
     def new_connection(self):
@@ -23,12 +25,12 @@ class ConnectionPool:
                                user=self.conf['user'],
                                password=self.conf['password'],
                                database=self.conf['database'],
-                               cursorclass=pymysql.cursors.DictCursor)
+                               cursorclass=DictCursor)
 
     def get_connection(self, timeout=None):
         start_time = time.time()
 
-        connection = self._occupy()
+        connection = self.occupy()
         if connection is not None:
             return connection
 
@@ -48,11 +50,11 @@ class ConnectionPool:
             if timeout is not None and time.time() - start_time > timeout:
                 raise Exception('No available connection')
 
-            connection = self._occupy()
+            connection = self.occupy()
             if connection is not None:
                 return connection
 
-    def _occupy(self):
+    def occupy(self):
         for connection in self._connections:
             if connection.status == 'idle':
                 connection.occupy()
@@ -68,9 +70,9 @@ class ConnectionPool:
 
 
 class DelegateConnection:
-    def __init__(self, connection, pool, create_time=time.time()):
-        self.connection = connection
-        self.pool = pool
+    def __init__(self, connection: PyMySQLConnection, pool: ConnectionPool, create_time=time.time()):
+        self.connection: PyMySQLConnection = connection
+        self.pool: ConnectionPool = pool
         self.status = 'idle'
         self.create_time = create_time
 
@@ -90,4 +92,5 @@ class DelegateConnection:
         self.connection.rollback()
 
     def begin(self):
+        self.connection.ping(reconnect=True)
         self.connection.begin()
