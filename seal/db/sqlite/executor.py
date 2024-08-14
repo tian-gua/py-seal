@@ -9,6 +9,9 @@ class SqliteExecutor(Executor):
         super().__init__(data_source)
 
     def find(self, sql, args, select_fields, result_type, **options):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         connection = self.data_source.get_connection()
         cursor = connection.cursor()
         try:
@@ -31,6 +34,9 @@ class SqliteExecutor(Executor):
             connection.close()
 
     def find_list(self, sql, args, select_fields, result_type, **options):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         connection = self.data_source.get_connection()
         cursor = connection.cursor()
         try:
@@ -53,6 +59,9 @@ class SqliteExecutor(Executor):
             connection.close()
 
     def count(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         connection = self.data_source.get_connection()
         cursor = connection.cursor()
         try:
@@ -72,6 +81,9 @@ class SqliteExecutor(Executor):
             connection.close()
 
     def update(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         connection = self.data_source.get_connection()
         cursor = connection.cursor()
         try:
@@ -88,6 +100,9 @@ class SqliteExecutor(Executor):
             connection.close()
 
     def insert(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         connection = self.data_source.get_connection()
         cursor = connection.cursor()
         try:
@@ -104,6 +119,9 @@ class SqliteExecutor(Executor):
             connection.close()
 
     def insert_bulk(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         connection = self.data_source.get_connection()
         cursor = connection.cursor()
         try:

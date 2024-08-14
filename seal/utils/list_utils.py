@@ -1,6 +1,9 @@
-def group(list_, key_func: callable, value_func: callable = None):
+from typing import List, Callable, Any, Dict
+
+
+def group(list_: List[Any], key_func: Callable, value_func: Callable = None):
     """
-    Group a list of dictionaries by a key.
+    Group a list of data by a key.
     """
     grouped = {}
     for item in list_:
@@ -12,3 +15,16 @@ def group(list_, key_func: callable, value_func: callable = None):
         else:
             grouped[key].append(item)
     return grouped
+
+
+def merge(list_: List[Any], merge_func: Callable):
+    """
+    Merge a list of data by a key.
+    """
+    merged: Any = None
+    for item in list_:
+        # if merged is None:
+        #     merged = item
+        #     continue
+        merged = merge_func(merged, item)
+    return merged

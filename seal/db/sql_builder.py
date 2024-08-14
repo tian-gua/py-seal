@@ -1,5 +1,3 @@
-from typing import Tuple, Callable, Any, Generator
-
 from loguru import logger
 
 
@@ -16,8 +14,6 @@ def build_select(query_wrapper) -> (str, tuple):
     if query_wrapper.offset is not None:
         sql += f' OFFSET {query_wrapper.offset}'
 
-    logger.debug(f'#### sql: {sql}')
-    logger.debug(f'#### args: {args}')
     return sql, args
 
 
@@ -28,8 +24,6 @@ def build_count(query_wrapper) -> (str, tuple):
         exp, args = query_wrapper.condition_tree.parse()
         sql += ' WHERE ' + exp
 
-    logger.debug(f'#### sql: {sql}')
-    logger.debug(f'#### args: {args}')
     return sql, args
 
 
@@ -40,8 +34,6 @@ def build_update(update_wrapper) -> (str, tuple):
         exp, args2 = update_wrapper.condition_tree.parse()
         sql += ' WHERE ' + exp
         args += args2
-    logger.debug(f'#### sql: {sql}')
-    logger.debug(f'#### args: {args}')
     return sql, args
 
 
@@ -51,8 +43,6 @@ def build_delete(update_wrapper) -> (str, tuple):
     if len(update_wrapper.condition_tree.conditions) > 0:
         exp, args = update_wrapper.condition_tree.parse()
         sql += ' WHERE ' + exp
-    logger.debug(f'#### sql: {sql}')
-    logger.debug(f'#### args: {args}')
     return sql, args
 
 
@@ -71,8 +61,6 @@ def build_insert(insert_wrapper, data, duplicated_key_update=False, duplicated_k
     if duplicated_key_update:
         sql += f' ON DUPLICATE KEY UPDATE {",".join([f"{field}=?" for field in insert_wrapper.insert_fields if keys is None or field in keys])}'
         args = args * 2
-    logger.debug(f'#### sql: {sql}')
-    logger.debug(f'#### args: {args}')
     return sql, args
 
 
@@ -100,8 +88,6 @@ def build_insert_bulk(insert_wrapper, data_list, duplicated_key_update=False, du
                     in data_list]
         else:
             args = [tuple([getattr(data, field) for field in insert_wrapper.insert_fields]) for data in data_list]
-    logger.debug(f'#### sql: {sql}')
-    logger.debug(f'#### args: {args}')
     return sql, args
 
 

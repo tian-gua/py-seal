@@ -1,3 +1,5 @@
+from typing import List, Dict
+
 from .config import Configuration
 from .db.query_wrapper import QueryWrapper
 from .db.update_wrapper import UpdateWrapper
@@ -79,7 +81,7 @@ class Seal:
     def wrapper(self):
         return Wrapper(self._logical_delete)
 
-    def raw(self, sql, args=()):
+    def raw(self, sql, args=()) -> List[Dict[str, any]]:
         return self._default_data_source.get_executor().raw(sql, args)
 
     def enable_logical_delete(self, logical_delete):

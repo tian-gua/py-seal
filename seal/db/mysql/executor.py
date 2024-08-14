@@ -9,6 +9,9 @@ class MysqlExecutor(Executor):
         super().__init__(data_source)
 
     def find(self, sql, args, select_fields, result_type, **options):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
         connection.begin()
@@ -34,6 +37,9 @@ class MysqlExecutor(Executor):
             connection.close()
 
     def find_list(self, sql, args, select_fields, result_type, **options):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
         connection.begin()
@@ -59,6 +65,9 @@ class MysqlExecutor(Executor):
             connection.close()
 
     def count(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
         connection.begin()
@@ -82,6 +91,9 @@ class MysqlExecutor(Executor):
             connection.close()
 
     def update(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
         connection.begin()
@@ -118,6 +130,9 @@ class MysqlExecutor(Executor):
             connection.close()
 
     def insert_bulk(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
         connection.begin()
@@ -125,6 +140,32 @@ class MysqlExecutor(Executor):
         try:
             for args in args:
                 cursor.execute(sql, args)
+        except Exception as e:
+            logger.exception(e)
+            raise e
+        finally:
+            cursor.close()
+            connection.commit()
+            connection.close()
+
+    def raw(self, sql, args=()):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+        
+        sql = sql.replace('?', '%s')
+        connection = self.data_source.get_connection()
+        connection.begin()
+        cursor = connection.cursor()
+        try:
+            result = cursor.execute(sql, args)
+            if result is None:
+                return None
+
+            rows = cursor.fetchall()
+            if rows is None:
+                return None
+
+            return [row for row in rows]
         except Exception as e:
             logger.exception(e)
             raise e
