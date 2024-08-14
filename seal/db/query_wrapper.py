@@ -1,6 +1,7 @@
 from .wrapper import Wrapper
 from .data_source import DataSource
 from .sql_builder import build_select, build_count
+from .result import Result, Results
 from dataclasses import fields
 
 
@@ -36,27 +37,27 @@ class QueryWrapper(Wrapper):
         self.offset = offset
         return self
 
-    def find(self, **options):
+    def find(self, **options) -> Result:
         self._handle_logical_delete(**options)
 
         sql, args = self._build_select()
-        return self.data_source.get_executor().find(sql, args, self.field_list, self.result_type, **options)
+        return self.data_source.get_executor().find(sql, args, self.result_type, **options)
 
-    def find_list(self, **options):
+    def find_list(self, **options) -> Results:
         self._handle_logical_delete(**options)
 
         sql, args = self._build_select()
-        return self.data_source.get_executor().find_list(sql, args, self.field_list, self.result_type, **options)
+        return self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
 
-    def find_page(self, page: int, page_size: int, **options):
+    def find_page(self, page: int, page_size: int, **options) -> (Results, int):
         self._handle_logical_delete(**options)
 
         self.limit = page_size
         self.offset = (page - 1) * page_size
         sql, args = self._build_select()
-        records = self.data_source.get_executor().find_list(sql, args, self.field_list, self.result_type, **options)
+        result = self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
         count = self.count()
-        return records, count
+        return result, count
 
     def count(self):
         sql, args = build_count(self)

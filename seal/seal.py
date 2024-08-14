@@ -1,10 +1,9 @@
-from typing import List, Dict
-
 from .config import Configuration
 from .db.query_wrapper import QueryWrapper
 from .db.update_wrapper import UpdateWrapper
 from .db.insert_wrapper import InsertWrapper
 from .db.wrapper import Wrapper
+from .db.result import Results
 from .cache import LRUCache
 from loguru import logger
 
@@ -60,28 +59,28 @@ class Seal:
             raise ValueError('Seal 未初始化')
         return self._configuration.get_conf(*keys)
 
-    def q(self, table):
+    def q(self, table) -> QueryWrapper:
         return QueryWrapper(table, self._default_data_source, self._logical_delete)
 
-    def query_wrapper(self, table):
+    def query_wrapper(self, table) -> QueryWrapper:
         return QueryWrapper(table, self._default_data_source, self._logical_delete)
 
-    def u(self, table):
+    def u(self, table) -> UpdateWrapper:
         return UpdateWrapper(table, self._default_data_source, self._logical_delete)
 
-    def update_wrapper(self, table):
+    def update_wrapper(self, table) -> UpdateWrapper:
         return UpdateWrapper(table, self._default_data_source, self._logical_delete)
 
-    def i(self, table):
+    def i(self, table) -> InsertWrapper:
         return InsertWrapper(table, self._default_data_source)
 
-    def insert_wrapper(self, table):
+    def insert_wrapper(self, table) -> InsertWrapper:
         return InsertWrapper(table, self._default_data_source)
 
-    def wrapper(self):
+    def wrapper(self) -> Wrapper:
         return Wrapper(self._logical_delete)
 
-    def raw(self, sql, args=()) -> List[Dict[str, any]]:
+    def raw(self, sql, args=()) -> Results:
         return self._default_data_source.get_executor().raw(sql, args)
 
     def enable_logical_delete(self, logical_delete):
