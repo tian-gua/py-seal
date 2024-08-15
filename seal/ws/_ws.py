@@ -1,6 +1,6 @@
 import threading
 import asyncio
-from ._ws_dispatcher import dispatcher
+from .ws_dispatcher import dispatcher
 from websockets.server import serve
 from websockets.exceptions import ConnectionClosed
 from .. import seal

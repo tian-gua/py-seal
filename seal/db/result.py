@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 
 class Result:
-    def __init__(self, row: dict = None, bean_type=None):
+    def __init__(self, row: Dict = None, bean_type=None):
         self.row = row
         self.bean_type = bean_type
 
@@ -13,21 +13,21 @@ class Result:
     def is_empty(self) -> bool:
         return self.row is None
 
-    def bean(self) -> Any:
+    def get(self) -> Any:
         if self.bean_type is None:
             raise Exception('no type specified')
         if self.row is not None:
             return self.bean_type(**self.row)
         return None
 
-    def dict(self) -> Dict | None:
+    def as_dict(self) -> Dict | None:
         if self.row is not None:
             return self.row
         return None
 
 
 class Results:
-    def __init__(self, rows: list[dict] = None, bean_type=None):
+    def __init__(self, rows: List[Dict] = None, bean_type=None):
         self.rows = rows
         self.bean_type = bean_type
 
@@ -38,14 +38,14 @@ class Results:
     def is_empty(self) -> bool:
         return self.rows is None or len(self.rows) == 0
 
-    def bean(self) -> Any | List[Any]:
+    def get(self) -> List[Any]:
         if self.bean_type is None:
             raise Exception('no type specified')
         if self.rows is not None:
             return [self.bean_type(**row) for row in self.rows]
         return []
 
-    def dict(self) -> Dict | list[Dict]:
+    def as_dict(self) -> List[Dict]:
         if self.rows is not None:
             return self.rows
         return []

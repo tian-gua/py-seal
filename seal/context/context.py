@@ -1,5 +1,5 @@
 from contextvars import ContextVar
-from ..wrapper import singleton
+from ..utils import singleton
 
 web_ctx = ContextVar('web', default={})
 

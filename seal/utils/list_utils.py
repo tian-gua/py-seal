@@ -1,4 +1,4 @@
-from typing import List, Callable, Any, Dict
+from typing import List, Callable, Any
 
 
 def group(list_: List[Any], key_func: Callable, value_func: Callable = None):
