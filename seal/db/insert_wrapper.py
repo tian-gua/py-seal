@@ -1,12 +1,25 @@
 from dataclasses import fields
+from .data_source import DataSource
 from .sql_builder import build_insert, build_insert_bulk, build_insert_iterator
 
 
 class InsertWrapper:
-    def __init__(self, table, data_source):
+    def __init__(self,
+                 table,
+                 data_source: DataSource,
+                 tenant_field=None,
+                 tenant_value=None,
+                 logic_delete_field=None,
+                 logic_delete_true=None,
+                 logic_delete_false=None):
         self.table = table
         self.data_source = data_source
         self.param_type = data_source.get_data_structure(table)
+        self.tenant_field = tenant_field
+        self.tenant_value = tenant_value
+        self.logic_delete_field = logic_delete_field
+        self.logic_delete_true = logic_delete_true
+        self.logic_delete_false = logic_delete_false
         self.insert_fields = []
 
     def insert(self, data, **options):
@@ -14,13 +27,9 @@ class InsertWrapper:
             raise ValueError('null data')
 
         if isinstance(data, dict):
-            keys = data.keys()
-            self.insert_fields = [f.name for f in fields(self.param_type) if
-                                  f.name != 'id' and f.name in keys]
+            self.handle_data_public_fields(data, True)
         else:
-            self.insert_fields = [f.name for f in fields(self.param_type) if
-                                  f.name != 'id' and getattr(data, f.name) is not None]
-
+            self.handle_data_public_fields(data, False)
         if 'duplicated_key_update' in options:
             sql, args = build_insert(self, data, options['duplicated_key_update'])
         else:
@@ -32,12 +41,9 @@ class InsertWrapper:
             raise ValueError('null data')
 
         if isinstance(data_list[0], dict):
-            keys = data_list[0].keys()
-            self.insert_fields = [f.name for f in fields(self.param_type) if
-                                  f.name != 'id' and f.name in keys]
+            self.handle_data_list_public_fields(data_list, True)
         else:
-            self.insert_fields = [f.name for f in fields(self.param_type) if
-                                  f.name != 'id' and getattr(data_list[0], f.name) is not None]
+            self.handle_data_list_public_fields(data_list, False)
 
         if 'duplicated_key_update' in options:
             sql, args = build_insert_bulk(self, data_list, duplicated_key_update=options['duplicated_key_update'])
@@ -52,12 +58,63 @@ class InsertWrapper:
             raise ValueError('null data')
 
         if isinstance(data_list[0], dict):
+            self.handle_data_list_public_fields(data_list, True)
+        else:
+            self.handle_data_list_public_fields(data_list, False)
+
+        data_iterator = build_insert_iterator(self, data_list, **options)
+        return self.data_source.get_executor().insert_interator(data_iterator)
+
+    def handle_data_public_fields(self, data, is_dict):
+        if is_dict:
+            if self.logic_delete_field is not None:
+                if self.logic_delete_true is None or self.logic_delete_false is None:
+                    raise ValueError('logic delete field and value is required')
+                data[self.logic_delete_field] = self.logic_delete_false
+            if self.tenant_field is not None:
+                if self.tenant_value is None:
+                    raise ValueError('tenant value not set')
+                data[self.tenant_field] = self.tenant_value
+
+            keys = data.keys()
+            self.insert_fields = [f.name for f in fields(self.param_type) if
+                                  f.name != 'id' and f.name in keys]
+        else:
+            if self.logic_delete_field is not None:
+                if self.logic_delete_true is None or self.logic_delete_false is None:
+                    raise ValueError('logic delete field and value is required')
+                setattr(data, self.logic_delete_field, self.logic_delete_false)
+            if self.tenant_field is not None:
+                if self.tenant_value is None:
+                    raise ValueError('tenant value not set')
+                setattr(data, self.tenant_field, self.tenant_value)
+
+            self.insert_fields = [f.name for f in fields(self.param_type) if
+                                  f.name != 'id' and getattr(data, f.name) is not None]
+
+    def handle_data_list_public_fields(self, data_list, is_dict):
+        if is_dict:
+            if self.logic_delete_field is not None:
+                if self.logic_delete_true is None or self.logic_delete_false is None:
+                    raise ValueError('logic delete field and value is required')
+                map(lambda x: x.update({self.logic_delete_field: self.logic_delete_false}), data_list)
+            if self.tenant_field is not None:
+                if self.tenant_value is None:
+                    raise ValueError('tenant value not set')
+                map(lambda x: x.update({self.tenant_field: self.tenant_value}), data_list)
+
             keys = data_list[0].keys()
             self.insert_fields = [f.name for f in fields(self.param_type) if
                                   f.name != 'id' and f.name in keys]
         else:
+            if self.logic_delete_field is not None:
+                if self.logic_delete_true is None or self.logic_delete_false is None:
+                    raise ValueError('logic delete field and value is required')
+                map(lambda x: setattr(x, self.logic_delete_field, self.logic_delete_false), data_list)
+            if self.tenant_field is not None:
+                if self.tenant_value is None:
+                    raise ValueError('tenant value not set')
+                map(lambda x: setattr(x, self.tenant_field, self.tenant_value), data_list)
+
             self.insert_fields = [f.name for f in fields(self.param_type) if
                                   f.name != 'id' and getattr(data_list[0], f.name) is not None]
-
-        data_iterator = build_insert_iterator(self, data_list, **options)
-        return self.data_source.get_executor().insert_interator(data_iterator)

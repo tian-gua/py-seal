@@ -6,8 +6,19 @@ from dataclasses import fields
 
 
 class QueryWrapper(Wrapper):
-    def __init__(self, table: str, data_source: DataSource, logical_delete=None):
-        super().__init__(logical_delete=logical_delete)
+    def __init__(self,
+                 table: str,
+                 data_source: DataSource,
+                 tenant_field=None,
+                 tenant_value=None,
+                 logic_delete_field=None,
+                 logic_delete_true=None,
+                 logic_delete_false=None):
+        super().__init__(tenant_field=tenant_field,
+                         tenant_value=tenant_value,
+                         logic_delete_field=logic_delete_field,
+                         logic_delete_true=logic_delete_true,
+                         logic_delete_false=logic_delete_false)
         self.table = table
         self.data_source = data_source
         self.result_type = data_source.get_data_structure(table)
@@ -38,19 +49,19 @@ class QueryWrapper(Wrapper):
         return self
 
     def find(self, **options) -> Result:
-        self._handle_logical_delete(**options)
+        self.handle_public_fields(**options)
 
         sql, args = self._build_select()
         return self.data_source.get_executor().find(sql, args, self.result_type, **options)
 
     def find_list(self, **options) -> Results:
-        self._handle_logical_delete(**options)
+        self.handle_public_fields(**options)
 
         sql, args = self._build_select()
         return self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
 
     def find_page(self, page: int, page_size: int, **options) -> (Results, int):
-        self._handle_logical_delete(**options)
+        self.handle_public_fields(**options)
 
         self.limit = page_size
         self.offset = (page - 1) * page_size

@@ -1,22 +1,18 @@
 from contextvars import ContextVar
-from ..utils import singleton
 
 web_ctx = ContextVar('web', default={})
 
 
-@singleton
-class WebContext:
-    def __init__(self):
-        self.ctx = web_ctx
+def ctx_get():
+    return web_ctx.get()
 
-    def get(self):
-        return self.ctx.get()
 
-    def set(self, value: dict):
-        self.ctx.set(value)
+def ctx_set(value: dict):
+    web_ctx.set(value)
 
-    def uid(self):
-        var = self.get()
-        if 'uid' not in var:
-            return None
-        return var['uid']
+
+def ctx_uid():
+    var = ctx_get()
+    if 'uid' not in var:
+        return None
+    return var['uid']

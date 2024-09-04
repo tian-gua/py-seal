@@ -10,8 +10,8 @@ class Result:
     def empty() -> 'Result':
         return Result()
 
-    def is_empty(self) -> bool:
-        return self.row is None
+    def is_present(self) -> bool:
+        return self.row is not None
 
     def get(self) -> Any:
         if self.bean_type is None:
@@ -35,8 +35,8 @@ class Results:
     def empty() -> 'Results':
         return Results()
 
-    def is_empty(self) -> bool:
-        return self.rows is None or len(self.rows) == 0
+    def is_present(self) -> bool:
+        return self.rows is not None and len(self.rows) > 0
 
     def get(self) -> List[Any]:
         if self.bean_type is None:

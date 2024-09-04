@@ -15,8 +15,7 @@ class Seal:
         self._initialized = False
         self._data_sources = {}
         self._default_data_source = None
-        self._logical_delete = None
-        self._default_cache: LRUCache = LRUCache(512)
+        self._lru_cache: LRUCache = LRUCache(1024)
 
     def init(self, config_path):
         self._configuration.load(config_path)
@@ -59,26 +58,40 @@ class Seal:
             raise ValueError('Seal 未初始化')
         return self._configuration.get_conf(*keys)
 
-    def q(self, table) -> QueryWrapper:
-        return QueryWrapper(table, self._default_data_source, self._logical_delete)
+    def query(self, table) -> QueryWrapper:
+        return QueryWrapper(table=table,
+                            data_source=self._default_data_source,
+                            tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
+                            tenant_value=self.get_config('seal', 'orm', 'tenant_value'),
+                            logic_delete_field=self.get_config('seal', 'orm', 'logic_delete_field'),
+                            logic_delete_true=self.get_config('seal', 'orm', 'logic_delete_true'),
+                            logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
+                            )
 
-    def query_wrapper(self, table) -> QueryWrapper:
-        return QueryWrapper(table, self._default_data_source, self._logical_delete)
+    def update(self, table) -> UpdateWrapper:
+        return UpdateWrapper(table,
+                             self._default_data_source,
+                             tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
+                             tenant_value=self.get_config('seal', 'orm', 'tenant_value'),
+                             update_by_field=self.get_config('seal', 'orm', 'update_by_field'),
+                             update_at_field=self.get_config('seal', 'orm', 'update_at_field'),
+                             logic_delete_field=self.get_config('seal', 'orm', 'logic_delete_field'),
+                             logic_delete_true=self.get_config('seal', 'orm', 'logic_delete_true'),
+                             logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
+                             )
 
-    def u(self, table) -> UpdateWrapper:
-        return UpdateWrapper(table, self._default_data_source, self._logical_delete)
-
-    def update_wrapper(self, table) -> UpdateWrapper:
-        return UpdateWrapper(table, self._default_data_source, self._logical_delete)
-
-    def i(self, table) -> InsertWrapper:
-        return InsertWrapper(table, self._default_data_source)
-
-    def insert_wrapper(self, table) -> InsertWrapper:
-        return InsertWrapper(table, self._default_data_source)
+    def insert(self, table) -> InsertWrapper:
+        return InsertWrapper(table,
+                             self._default_data_source,
+                             tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
+                             tenant_value=self.get_config('seal', 'orm', 'tenant_value'),
+                             logic_delete_field=self.get_config('seal', 'orm', 'logic_delete_field'),
+                             logic_delete_true=self.get_config('seal', 'orm', 'logic_delete_true'),
+                             logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
+                             )
 
     def wrapper(self) -> Wrapper:
-        return Wrapper(self._logical_delete)
+        return Wrapper()
 
     def raw(self, sql, args=()) -> Results:
         return self._default_data_source.get_executor().raw(sql, args)
@@ -90,5 +103,5 @@ class Seal:
     def model(self, model_name):
         return self._default_data_source.get_data_structure(model_name)
 
-    def default_cache(self) -> LRUCache:
-        return self._default_cache
+    def lru_cache(self) -> LRUCache:
+        return self._lru_cache
