@@ -1,3 +1,5 @@
+from typing import Any, List
+
 from .wrapper import Wrapper
 from .data_source import DataSource
 from .sql_builder import build_select, build_count
@@ -48,27 +50,35 @@ class QueryWrapper(Wrapper):
         self.offset = offset
         return self
 
-    def find(self, **options) -> Result:
+    def find(self, as_dict=False, **options) -> Any:
         self.handle_public_fields(**options)
 
         sql, args = self._build_select()
-        return self.data_source.get_executor().find(sql, args, self.result_type, **options)
+        result: Result = self.data_source.get_executor().find(sql, args, self.result_type, **options)
+        if as_dict:
+            return result.as_dict()
+        return result.get()
 
-    def find_list(self, **options) -> Results:
+    def find_list(self, as_dict=False, **options) -> List[Any]:
         self.handle_public_fields(**options)
 
         sql, args = self._build_select()
-        return self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
+        results: Results = self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
+        if as_dict:
+            return results.as_dict()
+        return results.get()
 
-    def find_page(self, page: int, page_size: int, **options) -> (Results, int):
+    def find_page(self, page: int, page_size: int, as_dict=False, **options) -> (List[Any], int):
         self.handle_public_fields(**options)
 
         self.limit = page_size
         self.offset = (page - 1) * page_size
         sql, args = self._build_select()
-        result = self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
+        results: Results = self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
         count = self.count()
-        return result, count
+        if as_dict:
+            return results.as_dict(), count
+        return results.get(), count
 
     def count(self):
         sql, args = build_count(self)
