@@ -28,3 +28,14 @@ def merge(list_: List[Any], merge_func: Callable):
         #     continue
         merged = merge_func(merged, item)
     return merged
+
+
+def key_map(list_: List[Any], key_func: Callable):
+    """
+    Map a list of data by a key.
+    """
+    mapped = {}
+    for item in list_:
+        key = key_func(item)
+        mapped[key] = item
+    return mapped

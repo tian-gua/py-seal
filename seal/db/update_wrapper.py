@@ -28,11 +28,11 @@ class UpdateWrapper(Wrapper):
         self.data_source = data_source
         self.update_fields = {}
 
-    def set(self, field, value):
+    def set(self, field, value) -> 'UpdateWrapper':
         self.update_fields[field] = value
         return self
 
-    def read(self, entity):
+    def read(self, entity) -> 'UpdateWrapper':
         if isinstance(entity, dict):
             for field in fields(self.data_source.get_data_structure(self.table)):
                 if field.name != 'id' and field.name in entity:
@@ -67,7 +67,7 @@ class UpdateWrapper(Wrapper):
             sql, args = build_delete(self)
             return self.data_source.get_executor().update(sql, args)
 
-    def handle_update_fields(self, **options):
+    def handle_update_fields(self, **options) -> 'UpdateWrapper':
         if self.update_at_field is not None:
             self.set(self.update_at_field, datetime.datetime.now())
         if self.update_by_field is not None:

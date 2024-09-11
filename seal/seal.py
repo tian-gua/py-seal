@@ -58,7 +58,7 @@ class Seal:
             raise ValueError('Seal 未初始化')
         return self._configuration.get_conf(*keys)
 
-    def query(self, table) -> QueryWrapper:
+    def query_wrapper(self, table) -> QueryWrapper:
         return QueryWrapper(table=table,
                             data_source=self._default_data_source,
                             tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
@@ -68,7 +68,7 @@ class Seal:
                             logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
                             )
 
-    def update(self, table) -> UpdateWrapper:
+    def update_wrapper(self, table) -> UpdateWrapper:
         return UpdateWrapper(table,
                              self._default_data_source,
                              tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
@@ -80,7 +80,7 @@ class Seal:
                              logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
                              )
 
-    def insert(self, table) -> InsertWrapper:
+    def insert_wrapper(self, table) -> InsertWrapper:
         return InsertWrapper(table,
                              self._default_data_source,
                              tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
@@ -90,7 +90,8 @@ class Seal:
                              logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
                              )
 
-    def wrapper(self) -> Wrapper:
+    # noinspection PyMethodMayBeStatic
+    def conditions_wrapper(self) -> Wrapper:
         return Wrapper()
 
     def raw(self, sql, args=()) -> Results:

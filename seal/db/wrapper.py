@@ -16,47 +16,47 @@ class Wrapper:
         self.logic_delete_true = logic_delete_true
         self.logic_delete_false = logic_delete_false
 
-    def eq(self, field, value):
+    def eq(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, value))
         return self
 
-    def ne(self, field, value):
+    def ne(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, value, '!='))
         return self
 
-    def gt(self, field, value):
+    def gt(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, value, '>'))
         return self
 
-    def ge(self, field, value):
+    def ge(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, value, '>='))
         return self
 
-    def lt(self, field, value):
+    def lt(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, value, '<'))
         return self
 
-    def le(self, field, value):
+    def le(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, value, '<='))
         return self
 
-    def in_(self, field, value):
+    def in_(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, value, 'in'))
         return self
 
-    def l_like(self, field, value):
+    def l_like(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, f'%{value}', 'like'))
         return self
 
-    def r_like(self, field, value):
+    def r_like(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, f'{value}%', 'like'))
         return self
 
-    def like(self, field, value):
+    def like(self, field, value) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, f'%{value}%', 'like'))
         return self
 
-    def or_(self, wrapper: Self):
+    def or_(self, wrapper: Self) -> 'Wrapper':
         wrapper.condition_tree.or_()
         self.condition_tree.add_tree(wrapper.condition_tree)
         return self

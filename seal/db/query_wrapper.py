@@ -30,23 +30,23 @@ class QueryWrapper(Wrapper):
         self.field_list = []
         self.ignore_fields = []
 
-    def select(self, *field_list):
+    def select(self, *field_list) -> 'QueryWrapper':
         self.field_list = field_list
         return self
 
-    def ignore(self, *field_list):
+    def ignore(self, *field_list) -> 'QueryWrapper':
         self.ignore_fields = field_list
         return self
 
-    def sort(self, *order_by):
+    def sort(self, *order_by) -> 'QueryWrapper':
         self.order_by = order_by
         return self
 
-    def limit(self, limit: int):
+    def limit(self, limit: int) -> 'QueryWrapper':
         self.limit = limit
         return self
 
-    def offset(self, offset: int):
+    def offset(self, offset: int) -> 'QueryWrapper':
         self.offset = offset
         return self
 
@@ -84,7 +84,7 @@ class QueryWrapper(Wrapper):
         sql, args = build_count(self)
         return self.data_source.get_executor().count(sql, args)
 
-    def _build_select(self):
+    def _build_select(self) -> (str, tuple):
         if len(self.field_list) == 0:
             self.field_list = [field.name for field in fields(self.result_type) if field.name not in self.ignore_fields]
         return build_select(self)

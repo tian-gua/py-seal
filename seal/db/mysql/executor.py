@@ -109,6 +109,9 @@ class MysqlExecutor(Executor):
             connection.close()
 
     def insert(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
         connection.begin()
