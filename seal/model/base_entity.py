@@ -1,9 +1,7 @@
 from datetime import datetime
 
-from pydantic import BaseModel
 
-
-class BaseEntity(BaseModel):
+class BaseEntity:
     id: int | None = None
     create_by: int | None = None
     update_by: int | None = None

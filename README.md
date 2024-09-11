@@ -19,6 +19,7 @@
 - [x] sqlite
 - [x] mysql
 - [x] mysql 连接池
+- [x] 多数据源
 - [x] cache
 - [x] schedule
 

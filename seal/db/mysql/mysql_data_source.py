@@ -1,4 +1,6 @@
 from abc import ABC
+from typing import Dict, Any
+
 from .table_info import TableField, TableInfo
 from ..data_source import DataSource
 from .connection_pool import ConnectionPool
@@ -8,15 +10,15 @@ from .executor import MysqlExecutor
 class MysqlDataSource(DataSource, ABC):
     def __init__(self, conf):
         self.connection_pool = ConnectionPool(conf)
-        self.table_info_dict = {}
+        self.models: Dict[str, Any] = {}
         self.executor = MysqlExecutor(self)
 
     def get_connection(self):
         return self.connection_pool.get_connection(10)
 
     def get_data_structure(self, table):
-        if table in self.table_info_dict:
-            return self.table_info_dict[table].parse_model()
+        if table in self.models:
+            return self.models[table]
 
         conn = self.get_connection()
         c = conn.cursor()
@@ -34,7 +36,8 @@ class MysqlDataSource(DataSource, ABC):
                 table_fields.append(table_field)
 
             table_info = TableInfo(table=table, table_fields=table_fields)
-            return table_info.parse_model()
+            self.models[table] = table_info.parse_model()
+            return self.models[table]
         finally:
             c.close()
             conn.close()

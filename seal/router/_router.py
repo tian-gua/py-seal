@@ -5,7 +5,7 @@ from functools import wraps
 import jwt
 from fastapi import FastAPI, Request, Response, HTTPException, Depends
 from starlette.middleware.cors import CORSMiddleware
-from ..context import WebContext
+from ..context import ctx_set
 from ..model import Response as ResponseModel
 from ..exception import BusinessException
 from .. import seal
@@ -26,7 +26,7 @@ async def verify_token(request: Request = Request):
         payload = jwt.decode(request.headers['Authorization'],
                              seal.get_config('seal', 'authorization', 'jwt_key'),
                              algorithms=["HS256"])
-        WebContext().set({'uid': payload['uid']})
+        ctx_set({'uid': payload['uid']})
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Token is invalid: {e}")
 

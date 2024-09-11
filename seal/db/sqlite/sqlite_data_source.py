@@ -1,22 +1,33 @@
 import sqlite3
 from abc import ABC
+from typing import Any, Dict
+
 from .table_info import TableField, TableInfo
 from .executor import SqliteExecutor
 from ..data_source import DataSource
 
 
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
 class SqliteDataSource(DataSource, ABC):
     def __init__(self, conf):
         self.src = conf['src']
-        self.table_info_dict = {}
+        self.models: Dict[str, Any] = {}
         self.executor = SqliteExecutor(self)
 
     def get_connection(self):
-        return sqlite3.connect(self.src)
+        conn = sqlite3.connect(self.src)
+        conn.row_factory = dict_factory
+        return conn
 
     def get_data_structure(self, table):
-        if table in self.table_info_dict:
-            return self.table_info_dict[table].parse_model()
+        if table in self.models:
+            return self.models[table]
 
         conn = self.get_connection()
         c = conn.cursor()
@@ -25,16 +36,17 @@ class SqliteDataSource(DataSource, ABC):
             rows = result.fetchall()
             table_fields = []
             for row in rows:
-                table_field = TableField(cid=row[0],
-                                         name=row[1],
-                                         type_=row[2],
-                                         notnull=row[3],
-                                         dflt_value=row[4],
-                                         pk=row[5])
+                table_field = TableField(cid=row['cid'],
+                                         name=row['name'],
+                                         type_=row['type'],
+                                         notnull=row['notnull'],
+                                         dflt_value=row['dflt_value'],
+                                         pk=row['pk'])
                 table_fields.append(table_field)
 
             table_info = TableInfo(table=table, table_fields=table_fields)
-            return table_info.parse_model()
+            self.models[table] = table_info.parse_model()
+            return self.models[table]
         finally:
             c.close()
             conn.close()
