@@ -9,8 +9,8 @@ def build_select(query_wrapper) -> (str, tuple):
         sql += ' WHERE ' + exp
     if query_wrapper.order_by is not None:
         sql += f' ORDER BY {",".join(query_wrapper.order_by)}'
-    if query_wrapper.limit is not None:
-        sql += f' LIMIT {query_wrapper.limit}'
+    if query_wrapper.limit_ is not None:
+        sql += f' LIMIT {query_wrapper.limit_}'
     if query_wrapper.offset is not None:
         sql += f' OFFSET {query_wrapper.offset}'
 

@@ -14,4 +14,14 @@ class Configuration:
         conf = self.config_dict
         for key in keys:
             conf = conf.get(key)
+            if not conf:
+                raise ValueError(f'config not found: {keys}')
+        return conf
+
+    def get_conf_default(self, *keys, default=None):
+        conf = self.config_dict
+        for key in keys:
+            conf = conf.get(key)
+            if not conf:
+                return default
         return conf
