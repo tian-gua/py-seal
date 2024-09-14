@@ -58,36 +58,41 @@ class Seal:
             raise ValueError('Seal 未初始化')
         return self._configuration.get_conf(*keys)
 
+    def get_config_default(self, *keys, default=None):
+        if not self._initialized:
+            raise ValueError('Seal 未初始化')
+        return self._configuration.get_conf_default(*keys, default)
+
     def query_wrapper(self, table) -> QueryWrapper:
         return QueryWrapper(table=table,
                             data_source=self._default_data_source,
-                            tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
-                            tenant_value=self.get_config('seal', 'orm', 'tenant_value'),
-                            logic_delete_field=self.get_config('seal', 'orm', 'logic_delete_field'),
-                            logic_delete_true=self.get_config('seal', 'orm', 'logic_delete_true'),
-                            logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
+                            tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
+                            tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
+                            logic_delete_field=self.get_config_default('seal', 'orm', 'logic_delete_field'),
+                            logic_delete_true=self.get_config_default('seal', 'orm', 'logic_delete_true'),
+                            logic_delete_false=self.get_config_default('seal', 'orm', 'logic_delete_false'),
                             )
 
     def update_wrapper(self, table) -> UpdateWrapper:
         return UpdateWrapper(table,
                              self._default_data_source,
-                             tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
-                             tenant_value=self.get_config('seal', 'orm', 'tenant_value'),
-                             update_by_field=self.get_config('seal', 'orm', 'update_by_field'),
-                             update_at_field=self.get_config('seal', 'orm', 'update_at_field'),
-                             logic_delete_field=self.get_config('seal', 'orm', 'logic_delete_field'),
-                             logic_delete_true=self.get_config('seal', 'orm', 'logic_delete_true'),
-                             logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
+                             tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
+                             tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
+                             update_by_field=self.get_config_default('seal', 'orm', 'update_by_field'),
+                             update_at_field=self.get_config_default('seal', 'orm', 'update_at_field'),
+                             logic_delete_field=self.get_config_default('seal', 'orm', 'logic_delete_field'),
+                             logic_delete_true=self.get_config_default('seal', 'orm', 'logic_delete_true'),
+                             logic_delete_false=self.get_config_default('seal', 'orm', 'logic_delete_false'),
                              )
 
     def insert_wrapper(self, table) -> InsertWrapper:
         return InsertWrapper(table,
                              self._default_data_source,
-                             tenant_field=self.get_config('seal', 'orm', 'tenant_field'),
-                             tenant_value=self.get_config('seal', 'orm', 'tenant_value'),
-                             logic_delete_field=self.get_config('seal', 'orm', 'logic_delete_field'),
-                             logic_delete_true=self.get_config('seal', 'orm', 'logic_delete_true'),
-                             logic_delete_false=self.get_config('seal', 'orm', 'logic_delete_false'),
+                             tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
+                             tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
+                             logic_delete_field=self.get_config_default('seal', 'orm', 'logic_delete_field'),
+                             logic_delete_true=self.get_config_default('seal', 'orm', 'logic_delete_true'),
+                             logic_delete_false=self.get_config_default('seal', 'orm', 'logic_delete_false'),
                              )
 
     # noinspection PyMethodMayBeStatic

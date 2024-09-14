@@ -24,7 +24,7 @@ class QueryWrapper(Wrapper):
         self.table = table
         self.data_source = data_source
         self.result_type = data_source.get_data_structure(table)
-        self.limit = None
+        self.limit_ = None
         self.offset = None
         self.order_by = None
         self.field_list = []
@@ -43,7 +43,7 @@ class QueryWrapper(Wrapper):
         return self
 
     def limit(self, limit: int) -> 'QueryWrapper':
-        self.limit = limit
+        self.limit_ = limit
         return self
 
     def offset(self, offset: int) -> 'QueryWrapper':
@@ -71,7 +71,7 @@ class QueryWrapper(Wrapper):
     def find_page(self, page: int, page_size: int, as_dict=False, **options) -> (List[Any], int):
         self.handle_public_fields(**options)
 
-        self.limit = page_size
+        self.limit_ = page_size
         self.offset = (page - 1) * page_size
         sql, args = self._build_select()
         results: Results = self.data_source.get_executor().find_list(sql, args, self.result_type, **options)

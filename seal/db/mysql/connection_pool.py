@@ -14,6 +14,7 @@ class ConnectionPool:
 
         for _ in range(self._min_connections):
             mysql_connection: PyMySQLConnection = pymysql.connect(host=conf['host'],
+                                                                  port=conf['port'],
                                                                   user=conf['user'],
                                                                   password=conf['password'],
                                                                   database=conf['database'],
@@ -22,6 +23,7 @@ class ConnectionPool:
 
     def new_connection(self):
         return pymysql.connect(host=self.conf['host'],
+                               port=self.conf['port'],
                                user=self.conf['user'],
                                password=self.conf['password'],
                                database=self.conf['database'],
