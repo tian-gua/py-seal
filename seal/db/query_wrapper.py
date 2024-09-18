@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Tuple
 
 from .wrapper import Wrapper
 from .data_source import DataSource
@@ -51,30 +51,24 @@ class QueryWrapper(Wrapper):
         return self
 
     def find(self, as_dict=False, **options) -> Any:
-        self.handle_public_fields(**options)
-
-        sql, args = self._build_select()
-        result: Result = self.data_source.get_executor().find(sql, args, self.result_type, **options)
+        sql, args = self.build_statement(**options)
+        result: Result = self.data_source.get_executor().find(sql, args, self.result_type)
         if as_dict:
             return result.as_dict()
         return result.get()
 
     def find_list(self, as_dict=False, **options) -> List[Any]:
-        self.handle_public_fields(**options)
-
-        sql, args = self._build_select()
-        results: Results = self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
+        sql, args = self.build_statement(**options)
+        results: Results = self.data_source.get_executor().find_list(sql, args, self.result_type)
         if as_dict:
             return results.as_dict()
         return results.get()
 
-    def find_page(self, page: int, page_size: int, as_dict=False, **options) -> (List[Any], int):
-        self.handle_public_fields(**options)
-
+    def find_page(self, page: int, page_size: int, as_dict=False, **options) -> Tuple[List[Any], int]:
         self.limit_ = page_size
         self.offset = (page - 1) * page_size
-        sql, args = self._build_select()
-        results: Results = self.data_source.get_executor().find_list(sql, args, self.result_type, **options)
+        sql, args = self.build_statement(**options)
+        results: Results = self.data_source.get_executor().find_list(sql, args, self.result_type)
         count = self.count()
         if as_dict:
             return results.as_dict(), count
@@ -84,7 +78,18 @@ class QueryWrapper(Wrapper):
         sql, args = build_count(self)
         return self.data_source.get_executor().count(sql, args)
 
-    def _build_select(self) -> (str, tuple):
+    def build_statement(self, **options) -> Tuple[str, Tuple[Any, ...]]:
+        self.handle_public_fields(**options)
+
         if len(self.field_list) == 0:
             self.field_list = [field.name for field in fields(self.result_type) if field.name not in self.ignore_fields]
         return build_select(self)
+
+    def build_sql(self, **options) -> str:
+        sql, args = self.build_statement(**options)
+        for arg in args:
+            if isinstance(arg, str):
+                sql = sql.replace('?', f"'{arg}'", 1)
+            else:
+                sql = sql.replace('?', str(arg), 1)
+        return sql

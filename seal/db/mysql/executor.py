@@ -9,7 +9,7 @@ class MysqlExecutor(Executor):
     def __init__(self, data_source: DataSource):
         super().__init__(data_source)
 
-    def find(self, sql, args, bean_type, **options) -> Result:
+    def find(self, sql, args, bean_type) -> Result:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -35,7 +35,7 @@ class MysqlExecutor(Executor):
             connection.commit()
             connection.close()
 
-    def find_list(self, sql, args, bean_type, **options) -> Results:
+    def find_list(self, sql, args, bean_type) -> Results:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -61,7 +61,7 @@ class MysqlExecutor(Executor):
             connection.commit()
             connection.close()
 
-    def count(self, sql, args):
+    def count(self, sql, args) -> int | None:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
