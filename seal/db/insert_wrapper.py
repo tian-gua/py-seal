@@ -6,15 +6,18 @@ from .sql_builder import build_insert, build_insert_bulk, build_insert_iterator
 class InsertWrapper:
     def __init__(self,
                  table,
-                 data_source: DataSource,
+                 database=None,
+                 data_source: DataSource = None,
                  tenant_field=None,
                  tenant_value=None,
                  logic_delete_field=None,
                  logic_delete_true=None,
                  logic_delete_false=None):
         self.table = table
+        if database is not None:
+            self.table = f'{database}.{table}'
         self.data_source = data_source
-        self.param_type = data_source.get_data_structure(table)
+        self.param_type = data_source.get_data_structure(self.table)
         self.tenant_field = tenant_field
         self.tenant_value = tenant_value
         self.logic_delete_field = logic_delete_field

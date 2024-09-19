@@ -9,7 +9,8 @@ class UpdateWrapper(Wrapper):
 
     def __init__(self,
                  table,
-                 data_source,
+                 database=None,
+                 data_source=None,
                  tenant_field=None,
                  tenant_value=None,
                  update_by_field=None,
@@ -22,10 +23,12 @@ class UpdateWrapper(Wrapper):
                          logic_delete_field=logic_delete_field,
                          logic_delete_true=logic_delete_true,
                          logic_delete_false=logic_delete_false)
+        self.table = table
+        if database is not None:
+            self.table = f'{database}.{table}'
+        self.data_source = data_source
         self.update_by_field = update_by_field
         self.update_at_field = update_at_field
-        self.table = table
-        self.data_source = data_source
         self.update_fields = {}
 
     def set(self, field, value) -> 'UpdateWrapper':

@@ -10,7 +10,8 @@ from dataclasses import fields
 class QueryWrapper(Wrapper):
     def __init__(self,
                  table: str,
-                 data_source: DataSource,
+                 database=None,
+                 data_source: DataSource = None,
                  tenant_field=None,
                  tenant_value=None,
                  logic_delete_field=None,
@@ -22,8 +23,10 @@ class QueryWrapper(Wrapper):
                          logic_delete_true=logic_delete_true,
                          logic_delete_false=logic_delete_false)
         self.table = table
+        if database is not None:
+            self.table = f'{database}.{table}'
         self.data_source = data_source
-        self.result_type = data_source.get_data_structure(table)
+        self.result_type = data_source.get_data_structure(self.table)
         self.limit_ = None
         self.offset = None
         self.order_by = None
