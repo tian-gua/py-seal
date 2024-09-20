@@ -1,15 +1,16 @@
+from typing import Any, Tuple, List
+
 from loguru import logger
-from ..data_source import DataSource
-from ..executor import Executor
-from ..result import Result, Results
+from seal.model.result import Result, Results
+from seal.protocol.data_source_protocol import DataSourceProtocol
 
 
-class SqliteExecutor(Executor):
+class SqliteExecutor:
 
-    def __init__(self, data_source: DataSource):
-        super().__init__(data_source)
+    def __init__(self, data_source: DataSourceProtocol):
+        self.data_source = data_source
 
-    def find(self, sql, args, bean_type) -> Result:
+    def find(self, sql: str, args: Tuple[Any, ...], bean_type: Any) -> Result:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -32,7 +33,7 @@ class SqliteExecutor(Executor):
             cursor.close()
             connection.close()
 
-    def find_list(self, sql, args, bean_type) -> Results:
+    def find_list(self, sql: str, args: Tuple[Any, ...], bean_type: Any) -> Results:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -55,7 +56,7 @@ class SqliteExecutor(Executor):
             cursor.close()
             connection.close()
 
-    def count(self, sql, args):
+    def count(self, sql: str, args: Tuple[Any, ...]) -> int | None:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -64,7 +65,7 @@ class SqliteExecutor(Executor):
         try:
             result = cursor.execute(sql, args)
             if result is None:
-                return Result.empty()
+                return None
 
             row = cursor.fetchone()
             if row is None:
@@ -78,7 +79,7 @@ class SqliteExecutor(Executor):
             cursor.close()
             connection.close()
 
-    def update(self, sql, args):
+    def update(self, sql: str, args: Tuple[Any, ...]) -> int | None:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -97,7 +98,7 @@ class SqliteExecutor(Executor):
             cursor.close()
             connection.close()
 
-    def insert(self, sql, args):
+    def insert(self, sql: str, args: Tuple[Any, ...]) -> int | None:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -116,7 +117,7 @@ class SqliteExecutor(Executor):
             cursor.close()
             connection.close()
 
-    def insert_bulk(self, sql, args):
+    def insert_bulk(self, sql: str, args: List[Tuple[Any, ...]]) -> int | None:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -135,21 +136,21 @@ class SqliteExecutor(Executor):
             cursor.close()
             connection.close()
 
-    def insert_interator(self, data_iterator):
-        connection = self.data_source.get_connection()
-        cursor = connection.cursor()
-        try:
-            data_iterator(lambda sql, args: cursor.execute(sql, args))
-            connection.commit()
-            return cursor.rowcount
-        except Exception as e:
-            logger.exception(e)
-            raise e
-        finally:
-            cursor.close()
-            connection.close()
+    # def insert_interator(self, data_iterator):
+    #     connection = self.data_source.get_connection()
+    #     cursor = connection.cursor()
+    #     try:
+    #         data_iterator(lambda sql, args: cursor.execute(sql, args))
+    #         connection.commit()
+    #         return cursor.rowcount
+    #     except Exception as e:
+    #         logger.exception(e)
+    #         raise e
+    #     finally:
+    #         cursor.close()
+    #         connection.close()
 
-    def raw(self, sql, args=()) -> Results:
+    def custom_query(self, sql: str, args: Tuple[Any, ...]) -> Results:
         logger.debug(f'#### sql: {sql}')
         logger.debug(f'#### args: {args}')
 
@@ -165,6 +166,25 @@ class SqliteExecutor(Executor):
                 return Results.empty()
 
             return Results(rows=rows)
+        except Exception as e:
+            logger.exception(e)
+            raise e
+        finally:
+            cursor.close()
+            connection.close()
+
+    def custom_update(self, sql: str, args: Tuple[Any, ...]) -> int | None:
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+
+        connection = self.data_source.get_connection()
+        cursor = connection.cursor()
+        try:
+            result = cursor.execute(sql, args)
+            connection.commit()
+            if result is None:
+                return None
+            return cursor.rowcount
         except Exception as e:
             logger.exception(e)
             raise e

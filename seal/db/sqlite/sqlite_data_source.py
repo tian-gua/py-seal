@@ -1,10 +1,9 @@
 import sqlite3
-from abc import ABC
 from typing import Any, Dict
 
 from .table_info import TableField, TableInfo
 from .executor import SqliteExecutor
-from ..data_source import DataSource
+from ...protocol.executor_protocol import ExecutorProtocol
 
 
 def dict_factory(cursor, row):
@@ -14,25 +13,36 @@ def dict_factory(cursor, row):
     return d
 
 
-class SqliteDataSource(DataSource, ABC):
-    def __init__(self, conf):
+class SqliteDataSource:
+    def __init__(self, name: str, conf: Dict[str, Any]):
+        self.name = name
         self.src = conf['src']
-        self.models: Dict[str, Any] = {}
-        self.executor = SqliteExecutor(self)
+        self.default_database = conf.get('database')
+        self.executor: ExecutorProtocol = SqliteExecutor(self)
+
+    def get_name(self) -> str:
+        return self.name
+
+    # noinspection PyMethodMayBeStatic
+    def get_type(self) -> str:
+        return 'sqlite'
+
+    def get_executor(self) -> ExecutorProtocol:
+        return self.executor
 
     def get_connection(self):
         conn = sqlite3.connect(self.src)
         conn.row_factory = dict_factory
         return conn
 
-    def get_data_structure(self, table):
-        if table in self.models:
-            return self.models[table]
+    def get_default_database(self) -> str:
+        return self.default_database
 
+    def load_structure(self, database: str, table: str) -> Any:
         conn = self.get_connection()
         c = conn.cursor()
         try:
-            result = c.execute(f'PRAGMA table_info({table})')
+            result = c.execute(f'PRAGMA table_info({database}.{table})')
             rows = result.fetchall()
             table_fields = []
             for row in rows:
@@ -45,14 +55,7 @@ class SqliteDataSource(DataSource, ABC):
                 table_fields.append(table_field)
 
             table_info = TableInfo(table=table, table_fields=table_fields)
-            self.models[table] = table_info.parse_model()
-            return self.models[table]
+            return table_info.parse_model()
         finally:
             c.close()
             conn.close()
-
-    def get_executor(self):
-        return self.executor
-
-    def get_type(self):
-        return 'sqlite'

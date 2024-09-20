@@ -1,11 +1,16 @@
+from typing import Any, Dict
+
 from .config import Configuration
 from .db.query_wrapper import QueryWrapper
 from .db.update_wrapper import UpdateWrapper
 from .db.insert_wrapper import InsertWrapper
 from .db.wrapper import Wrapper
-from .db.result import Results
+from .db.structures import structures
+from seal.model.result import Results
 from .cache import LRUCache
 from loguru import logger
+
+from .protocol.data_source_protocol import DataSourceProtocol
 
 
 class Seal:
@@ -13,8 +18,7 @@ class Seal:
     def __init__(self):
         self._configuration = Configuration()
         self._initialized = False
-        self._data_sources = {}
-        self._default_data_source = None
+        self.data_source_dict: Dict[str, DataSourceProtocol] = {}
         self._lru_cache: LRUCache = LRUCache(1024)
 
     def init(self, config_path):
@@ -31,42 +35,39 @@ class Seal:
             data_source = self.get_config('seal', 'data_source', data_source_name)
             if 'mysql' == data_source.get('type'):
                 from .db.mysql.mysql_data_source import MysqlDataSource
-                self._data_sources[data_source_name] = MysqlDataSource(data_source_conf)
+                self.data_source_dict[data_source_name] = MysqlDataSource(name=data_source_name, conf=data_source_conf)
             elif 'sqlite' == data_source.get('type'):
                 from .db.sqlite.sqlite_data_source import SqliteDataSource
-                self._data_sources[data_source_name] = SqliteDataSource(data_source_conf)
+                self.data_source_dict[data_source_name] = SqliteDataSource(name=data_source_name, conf=data_source_conf)
             else:
                 raise ValueError(f'不支持的数据源类型: {data_source.get("type")}')
 
-            if data_source_conf.get('default', False):
-                self._default_data_source = self._data_sources[data_source_name]
-
-        if len(self._data_sources.values()) == 1 and self._default_data_source is None:
-            self._default_data_source = list(self._data_sources.values())[0]
-        if self._default_data_source is None:
-            raise ValueError('未配置默认数据源')
-        logger.info(f'初始化 seal({self}) 成功')
+        if 'default' not in self.data_source_dict:
+            raise ValueError('unknown default data source')
+        logger.info(f'init seal with config: {config_path}')
         return self
 
     def data_source(self, data_source_name):
         if not self._initialized:
-            raise ValueError('Seal 未初始化')
-        return self._data_sources.get(data_source_name)
+            raise ValueError('uninitialized seal')
+        return self.data_source_dict.get(data_source_name)
 
     def get_config(self, *keys):
         if not self._initialized:
-            raise ValueError('Seal 未初始化')
+            raise ValueError('uninitialized seal')
         return self._configuration.get_conf(*keys)
 
     def get_config_default(self, *keys, default=None):
         if not self._initialized:
-            raise ValueError('Seal 未初始化')
-        return self._configuration.get_conf_default(*keys, default)
+            raise ValueError('uninitialized seal')
+        return self._configuration.get_conf_default(*keys, default=default)
 
-    def query_wrapper(self, table, database=None) -> QueryWrapper:
+    def query_wrapper(self, table: str, database: str | None = None, data_source: str = 'default') -> QueryWrapper:
+        if database is None:
+            database = self.data_source_dict[data_source].get_default_database()
         return QueryWrapper(table=table,
                             database=database,
-                            data_source=self._default_data_source,
+                            data_source=self.data_source_dict[data_source],
                             tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
                             tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
                             logic_delete_field=self.get_config_default('seal', 'orm', 'logic_delete_field'),
@@ -74,10 +75,12 @@ class Seal:
                             logic_delete_false=self.get_config_default('seal', 'orm', 'logic_delete_false'),
                             )
 
-    def update_wrapper(self, table, database=None) -> UpdateWrapper:
+    def update_wrapper(self, table: str, database: str | None = None, data_source: str = 'default') -> UpdateWrapper:
+        if database is None:
+            database = self.data_source_dict[data_source].get_default_database()
         return UpdateWrapper(table,
                              database=database,
-                             data_source=self._default_data_source,
+                             data_source=self.data_source_dict[data_source],
                              tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
                              tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
                              update_by_field=self.get_config_default('seal', 'orm', 'update_by_field'),
@@ -87,10 +90,12 @@ class Seal:
                              logic_delete_false=self.get_config_default('seal', 'orm', 'logic_delete_false'),
                              )
 
-    def insert_wrapper(self, table, database=None) -> InsertWrapper:
+    def insert_wrapper(self, table: str, database: str | None = None, data_source: str = 'default') -> InsertWrapper:
+        if database is None:
+            database = self.data_source_dict[data_source].get_default_database()
         return InsertWrapper(table,
                              database=database,
-                             data_source=self._default_data_source,
+                             data_source=self.data_source_dict[data_source],
                              tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
                              tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
                              logic_delete_field=self.get_config_default('seal', 'orm', 'logic_delete_field'),
@@ -102,15 +107,27 @@ class Seal:
     def conditions_wrapper(self) -> Wrapper:
         return Wrapper()
 
-    def raw(self, sql, args=()) -> Results:
-        return self._default_data_source.get_executor().raw(sql, args)
+    def custom_query(self, data_source: str, sql: str, args=tuple[Any, ...]) -> Results:
+        if data_source not in self.data_source_dict:
+            raise ValueError(f'unknown data source: {data_source}')
+        if sql is None:
+            raise ValueError('sql is required')
+        return self.data_source_dict[data_source].get_executor().custom_query(sql, args)
 
-    def enable_logical_delete(self, logical_delete):
-        self._logical_delete = logical_delete
-        return self
+    def custom_update(self, data_source: str, sql: str, args=tuple[Any, ...]) -> int | None:
+        if data_source not in self.data_source_dict:
+            raise ValueError(f'unknown data source: {data_source}')
+        if sql is None:
+            raise ValueError('sql is required')
+        return self.data_source_dict['default'].get_executor().custom_update(sql, args)
 
-    def model(self, model_name):
-        return self._default_data_source.get_data_structure(model_name)
+    # noinspection PyMethodMayBeStatic
+    def get_structure(self, data_source='default', database=None, name: str = None) -> Any:
+        if database is None:
+            database = self.data_source_dict[data_source].get_default_database()
+        if name is None:
+            raise ValueError('name is required')
+        return structures.get(data_source, database, name)
 
     def lru_cache(self) -> LRUCache:
         return self._lru_cache

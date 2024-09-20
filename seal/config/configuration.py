@@ -22,6 +22,6 @@ class Configuration:
         conf = self.config_dict
         for key in keys:
             conf = conf.get(key)
-            if not conf:
+            if conf is None:
                 return default
         return conf

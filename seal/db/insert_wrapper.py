@@ -1,13 +1,14 @@
 from dataclasses import fields
-from .data_source import DataSource
 from .sql_builder import build_insert, build_insert_bulk, build_insert_iterator
+from .structures import structures
+from ..protocol.data_source_protocol import DataSourceProtocol
 
 
 class InsertWrapper:
     def __init__(self,
                  table,
                  database=None,
-                 data_source: DataSource = None,
+                 data_source: DataSourceProtocol = None,
                  tenant_field=None,
                  tenant_value=None,
                  logic_delete_field=None,
@@ -17,7 +18,12 @@ class InsertWrapper:
         if database is not None:
             self.table = f'{database}.{table}'
         self.data_source = data_source
-        self.param_type = data_source.get_data_structure(self.table)
+
+        self.param_type = structures.get(data_source=self.data_source.get_name(), database=database, table=table)
+        if self.param_type is None:
+            self.param_type = self.data_source.load_structure(database, table)
+            structures.register(data_source=self.data_source.get_name(), database=database, table=table, structure=self.param_type)
+
         self.tenant_field = tenant_field
         self.tenant_value = tenant_value
         self.logic_delete_field = logic_delete_field
@@ -56,17 +62,17 @@ class InsertWrapper:
             sql, args = build_insert_bulk(self, data_list)
         return self.data_source.get_executor().insert_bulk(sql, args)
 
-    def insert_iterator(self, data_list, **options):
-        if data_list is None or len(data_list) == 0:
-            raise ValueError('null data')
-
-        if isinstance(data_list[0], dict):
-            self.handle_data_list_public_fields(data_list, True)
-        else:
-            self.handle_data_list_public_fields(data_list, False)
-
-        data_iterator = build_insert_iterator(self, data_list, **options)
-        return self.data_source.get_executor().insert_interator(data_iterator)
+    # def insert_iterator(self, data_list, **options):
+    #     if data_list is None or len(data_list) == 0:
+    #         raise ValueError('null data')
+    #
+    #     if isinstance(data_list[0], dict):
+    #         self.handle_data_list_public_fields(data_list, True)
+    #     else:
+    #         self.handle_data_list_public_fields(data_list, False)
+    #
+    #     data_iterator = build_insert_iterator(self, data_list, **options)
+    #     return self.data_source.get_executor().insert_interator(data_iterator)
 
     def handle_data_public_fields(self, data, is_dict):
         if is_dict:

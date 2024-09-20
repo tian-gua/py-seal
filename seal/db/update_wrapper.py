@@ -50,7 +50,7 @@ class UpdateWrapper(Wrapper):
 
     def update(self, **options):
         if len(self.condition_tree.conditions) == 0:
-            raise ValueError('不支持全量更新')
+            raise ValueError('unsupported update all')
 
         self.handle_public_fields(**options)
 
@@ -59,7 +59,7 @@ class UpdateWrapper(Wrapper):
 
     def delete(self, **options):
         if len(self.condition_tree.conditions) == 0:
-            raise ValueError('不支持全量更新')
+            raise ValueError('unsupported delete all')
 
         self.handle_public_fields(**options)
 
