@@ -10,7 +10,7 @@ from seal.model.result import Results
 from .cache import LRUCache
 from loguru import logger
 
-from .protocol.data_source_protocol import DataSourceProtocol
+from .protocol.data_source_protocol import IDataSource
 
 
 class Seal:
@@ -18,7 +18,7 @@ class Seal:
     def __init__(self):
         self._configuration = Configuration()
         self._initialized = False
-        self.data_source_dict: Dict[str, DataSourceProtocol] = {}
+        self.data_source_dict: Dict[str, IDataSource] = {}
         self._lru_cache: LRUCache = LRUCache(1024)
 
     def init(self, config_path):

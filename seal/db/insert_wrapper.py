@@ -1,14 +1,14 @@
 from dataclasses import fields
-from .sql_builder import build_insert, build_insert_bulk, build_insert_iterator
+from .sql_builder import build_insert, build_insert_bulk
 from .structures import structures
-from ..protocol.data_source_protocol import DataSourceProtocol
+from ..protocol.data_source_protocol import IDataSource
 
 
 class InsertWrapper:
     def __init__(self,
                  table,
                  database=None,
-                 data_source: DataSourceProtocol = None,
+                 data_source: IDataSource = None,
                  tenant_field=None,
                  tenant_value=None,
                  logic_delete_field=None,

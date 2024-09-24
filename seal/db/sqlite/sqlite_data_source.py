@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 from .table_info import TableField, TableInfo
 from .executor import SqliteExecutor
-from ...protocol.executor_protocol import ExecutorProtocol
+from ...protocol.executor_protocol import IExecutor
 
 
 def dict_factory(cursor, row):
@@ -18,7 +18,7 @@ class SqliteDataSource:
         self.name = name
         self.src = conf['src']
         self.default_database = conf.get('database')
-        self.executor: ExecutorProtocol = SqliteExecutor(self)
+        self.executor: IExecutor = SqliteExecutor(self)
 
     def get_name(self) -> str:
         return self.name
@@ -27,7 +27,7 @@ class SqliteDataSource:
     def get_type(self) -> str:
         return 'sqlite'
 
-    def get_executor(self) -> ExecutorProtocol:
+    def get_executor(self) -> IExecutor:
         return self.executor
 
     def get_connection(self):

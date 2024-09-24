@@ -3,7 +3,7 @@ from typing import Dict, Any
 from .table_info import TableField, TableInfo
 from .connection_pool import ConnectionPool
 from .executor import MysqlExecutor
-from ...protocol.executor_protocol import ExecutorProtocol
+from ...protocol.executor_protocol import IExecutor
 
 
 class MysqlDataSource:
@@ -11,7 +11,7 @@ class MysqlDataSource:
         self.name = name
         self.default_database = conf.get('database')
         self.connection_pool = ConnectionPool(conf)
-        self.executor: ExecutorProtocol = MysqlExecutor(self)
+        self.executor: IExecutor = MysqlExecutor(self)
 
     def get_name(self) -> str:
         return self.name
@@ -23,7 +23,7 @@ class MysqlDataSource:
     def get_connection(self):
         return self.connection_pool.get_connection(10)
 
-    def get_executor(self) -> ExecutorProtocol:
+    def get_executor(self) -> IExecutor:
         return self.executor
 
     def get_default_database(self) -> str:

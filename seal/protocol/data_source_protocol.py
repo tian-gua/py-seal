@@ -1,16 +1,16 @@
 from typing import Protocol, Any
 
-from .executor_protocol import ExecutorProtocol
+from .executor_protocol import IExecutor
 
 
-class DataSourceProtocol(Protocol):
+class IDataSource(Protocol):
     def get_name(self) -> str:
         ...
 
     def get_type(self) -> str:
         ...
 
-    def get_executor(self) -> ExecutorProtocol:
+    def get_executor(self) -> IExecutor:
         ...
 
     def load_structure(self, database: str, table: str) -> Any:

@@ -16,7 +16,7 @@ class ConnectionPool:
             mysql_connection: PyMySQLConnection = pymysql.connect(host=conf['host'],
                                                                   port=conf['port'],
                                                                   user=conf['user'],
-                                                                  password=conf['password'],
+                                                                  password=conf['password'].encode('utf-8'),
                                                                   database=conf['database'],
                                                                   cursorclass=DictCursor)
             self._connections.append(DelegateConnection(mysql_connection, self))
@@ -25,7 +25,7 @@ class ConnectionPool:
         return pymysql.connect(host=self.conf['host'],
                                port=self.conf['port'],
                                user=self.conf['user'],
-                               password=self.conf['password'],
+                               password=self.conf['password'].encode('utf-8'),
                                database=self.conf['database'],
                                cursorclass=DictCursor)
 

@@ -3,7 +3,7 @@ from typing import Protocol, Tuple, Any, List
 from ..model.result import Result, Results
 
 
-class ExecutorProtocol(Protocol):
+class IExecutor(Protocol):
 
     def find(self, sql: str, args: Tuple[Any, ...], bean_type: Any) -> Result:
         ...

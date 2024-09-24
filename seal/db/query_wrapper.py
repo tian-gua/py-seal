@@ -6,14 +6,14 @@ from .sql_builder import build_select, build_count
 from seal.model.result import Result, Results
 from dataclasses import fields
 
-from ..protocol.data_source_protocol import DataSourceProtocol
+from ..protocol.data_source_protocol import IDataSource
 
 
 class QueryWrapper(Wrapper):
     def __init__(self,
                  table: str,
                  database=None,
-                 data_source: DataSourceProtocol = None,
+                 data_source: IDataSource = None,
                  tenant_field=None,
                  tenant_value=None,
                  logic_delete_field=None,
