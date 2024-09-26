@@ -2,12 +2,12 @@ from typing import Any, Tuple, List
 
 from loguru import logger
 from seal.model.result import Result, Results
-from seal.protocol.data_source_protocol import IDataSourceProtocol
+from seal.protocol.data_source_protocol import IDataSource
 
 
 class SqliteExecutor:
 
-    def __init__(self, data_source: IDataSourceProtocol):
+    def __init__(self, data_source: IDataSource):
         self.data_source = data_source
 
     def find(self, sql: str, args: Tuple[Any, ...], bean_type: Any) -> Result:

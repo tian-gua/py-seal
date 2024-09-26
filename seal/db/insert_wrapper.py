@@ -15,14 +15,19 @@ class InsertWrapper:
                  logic_delete_true=None,
                  logic_delete_false=None):
         self.table = table
-        if database is not None:
+        if database is not None and database != '':
             self.table = f'{database}.{table}'
         self.data_source = data_source
 
-        self.param_type = structures.get(data_source=self.data_source.get_name(), database=database, table=table)
+        self.param_type = structures.get(data_source=self.data_source.get_name(),
+                                         database=database or data_source.get_default_database(),
+                                         table=table)
         if self.param_type is None:
             self.param_type = self.data_source.load_structure(database, table)
-            structures.register(data_source=self.data_source.get_name(), database=database, table=table, structure=self.param_type)
+            structures.register(data_source=self.data_source.get_name(),
+                                database=database or data_source.get_default_database(),
+                                table=table,
+                                structure=self.param_type)
 
         self.tenant_field = tenant_field
         self.tenant_value = tenant_value

@@ -24,7 +24,7 @@ class UpdateWrapper(Wrapper):
                          logic_delete_true=logic_delete_true,
                          logic_delete_false=logic_delete_false)
         self.table = table
-        if database is not None:
+        if database is not None and database != '':
             self.table = f'{database}.{table}'
         self.data_source = data_source
         self.update_by_field = update_by_field

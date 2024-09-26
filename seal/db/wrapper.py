@@ -56,7 +56,7 @@ class Wrapper:
         self.condition_tree.add_condition(Condition(field, f'%{value}%', 'like'))
         return self
 
-    def or_(self, wrapper: Self) -> 'Wrapper':
+    def or_(self, wrapper: 'Wrapper') -> 'Wrapper':
         wrapper.condition_tree.or_()
         self.condition_tree.add_tree(wrapper.condition_tree)
         return self

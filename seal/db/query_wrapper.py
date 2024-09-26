@@ -25,14 +25,19 @@ class QueryWrapper(Wrapper):
                          logic_delete_true=logic_delete_true,
                          logic_delete_false=logic_delete_false)
         self.table = table
-        if database is not None:
+        if database is not None and database != '':
             self.table = f'{database}.{table}'
         self.data_source = data_source
 
-        self.result_type = structures.get(data_source=self.data_source.get_name(), database=database, table=table)
+        self.result_type = structures.get(data_source=self.data_source.get_name(),
+                                          database=database or data_source.get_default_database(),
+                                          table=table)
         if self.result_type is None:
             self.result_type = self.data_source.load_structure(database, table)
-            structures.register(data_source=self.data_source.get_name(), database=database, table=table, structure=self.result_type)
+            structures.register(data_source=self.data_source.get_name(),
+                                database=database or data_source.get_default_database(),
+                                table=table,
+                                structure=self.result_type)
 
         self.limit_ = None
         self.offset = None

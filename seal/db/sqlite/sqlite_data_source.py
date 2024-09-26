@@ -17,7 +17,6 @@ class SqliteDataSource:
     def __init__(self, name: str, conf: Dict[str, Any]):
         self.name = name
         self.src = conf['src']
-        self.default_database = conf.get('database')
         self.executor: IExecutor = SqliteExecutor(self)
 
     def get_name(self) -> str:
@@ -35,14 +34,15 @@ class SqliteDataSource:
         conn.row_factory = dict_factory
         return conn
 
+    # noinspection PyMethodMayBeStatic
     def get_default_database(self) -> str:
-        return self.default_database
+        return ''
 
     def load_structure(self, database: str, table: str) -> Any:
         conn = self.get_connection()
         c = conn.cursor()
         try:
-            result = c.execute(f'PRAGMA table_info({database}.{table})')
+            result = c.execute(f'PRAGMA table_info({table})')
             rows = result.fetchall()
             table_fields = []
             for row in rows:

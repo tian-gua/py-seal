@@ -122,12 +122,16 @@ class Seal:
         return self.data_source_dict['default'].get_executor().custom_update(sql, args)
 
     # noinspection PyMethodMayBeStatic
-    def get_structure(self, data_source='default', database=None, name: str = None) -> Any:
+    def get_structure(self, name: str = None, data_source: str = 'default', database: str | None = None) -> Any:
         if database is None:
             database = self.data_source_dict[data_source].get_default_database()
         if name is None:
             raise ValueError('name is required')
-        return structures.get(data_source, database, name)
+        structure = structures.get(data_source, database, name)
+        if structure is None:
+            structure = self.data_source_dict[data_source].load_structure(database, name)
+            structures.register(data_source, database, name, structure)
+        return structure
 
     def lru_cache(self) -> LRUCache:
         return self._lru_cache
