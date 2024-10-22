@@ -11,9 +11,9 @@ class InsertWrapper:
                  data_source: IDataSource = None,
                  tenant_field=None,
                  tenant_value=None,
-                 logic_delete_field=None,
-                 logic_delete_true=None,
-                 logic_delete_false=None):
+                 logical_deleted_field=None,
+                 logical_deleted_value_true=None,
+                 logical_deleted_value_false=None):
         self.table = table
         if database is not None and database != '':
             self.table = f'{database}.{table}'
@@ -31,9 +31,9 @@ class InsertWrapper:
 
         self.tenant_field = tenant_field
         self.tenant_value = tenant_value
-        self.logic_delete_field = logic_delete_field
-        self.logic_delete_true = logic_delete_true
-        self.logic_delete_false = logic_delete_false
+        self.logical_deleted_field = logical_deleted_field
+        self.logical_deleted_value_true = logical_deleted_value_true
+        self.logical_deleted_value_false = logical_deleted_value_false
         self.insert_fields = []
 
     def insert(self, data, **options):
@@ -81,10 +81,10 @@ class InsertWrapper:
 
     def handle_data_public_fields(self, data, is_dict):
         if is_dict:
-            if self.logic_delete_field is not None:
-                if self.logic_delete_true is None or self.logic_delete_false is None:
+            if self.logical_deleted_field is not None:
+                if self.logical_deleted_value_true is None or self.logical_deleted_value_false is None:
                     raise ValueError('logic delete field and value is required')
-                data[self.logic_delete_field] = self.logic_delete_false
+                data[self.logical_deleted_field] = self.logical_deleted_value_false
             if self.tenant_field is not None:
                 if self.tenant_value is None:
                     raise ValueError('tenant value not set')
@@ -94,10 +94,10 @@ class InsertWrapper:
             self.insert_fields = [f.name for f in fields(self.param_type) if
                                   f.name != 'id' and f.name in keys]
         else:
-            if self.logic_delete_field is not None:
-                if self.logic_delete_true is None or self.logic_delete_false is None:
+            if self.logical_deleted_field is not None:
+                if self.logical_deleted_value_true is None or self.logical_deleted_value_false is None:
                     raise ValueError('logic delete field and value is required')
-                setattr(data, self.logic_delete_field, self.logic_delete_false)
+                setattr(data, self.logical_deleted_field, self.logical_deleted_value_false)
             if self.tenant_field is not None:
                 if self.tenant_value is None:
                     raise ValueError('tenant value not set')
@@ -108,10 +108,10 @@ class InsertWrapper:
 
     def handle_data_list_public_fields(self, data_list, is_dict):
         if is_dict:
-            if self.logic_delete_field is not None:
-                if self.logic_delete_true is None or self.logic_delete_false is None:
+            if self.logical_deleted_field is not None:
+                if self.logical_deleted_value_true is None or self.logical_deleted_value_false is None:
                     raise ValueError('logic delete field and value is required')
-                map(lambda x: x.update({self.logic_delete_field: self.logic_delete_false}), data_list)
+                map(lambda x: x.update({self.logical_deleted_field: self.logical_deleted_value_false}), data_list)
             if self.tenant_field is not None:
                 if self.tenant_value is None:
                     raise ValueError('tenant value not set')
@@ -121,10 +121,10 @@ class InsertWrapper:
             self.insert_fields = [f.name for f in fields(self.param_type) if
                                   f.name != 'id' and f.name in keys]
         else:
-            if self.logic_delete_field is not None:
-                if self.logic_delete_true is None or self.logic_delete_false is None:
+            if self.logical_deleted_field is not None:
+                if self.logical_deleted_value_true is None or self.logical_deleted_value_false is None:
                     raise ValueError('logic delete field and value is required')
-                map(lambda x: setattr(x, self.logic_delete_field, self.logic_delete_false), data_list)
+                map(lambda x: setattr(x, self.logical_deleted_field, self.logical_deleted_value_false), data_list)
             if self.tenant_field is not None:
                 if self.tenant_value is None:
                     raise ValueError('tenant value not set')

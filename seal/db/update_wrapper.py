@@ -13,22 +13,22 @@ class UpdateWrapper(Wrapper):
                  data_source=None,
                  tenant_field=None,
                  tenant_value=None,
-                 update_by_field=None,
-                 update_at_field=None,
-                 logic_delete_field=None,
-                 logic_delete_true=None,
-                 logic_delete_false=None):
+                 updated_by_field=None,
+                 updated_at_field=None,
+                 logical_deleted_field=None,
+                 logical_deleted_value_true=None,
+                 logical_deleted_value_false=None):
         super().__init__(tenant_field=tenant_field,
                          tenant_value=tenant_value,
-                         logic_delete_field=logic_delete_field,
-                         logic_delete_true=logic_delete_true,
-                         logic_delete_false=logic_delete_false)
+                         logical_deleted_field=logical_deleted_field,
+                         logical_deleted_value_true=logical_deleted_value_true,
+                         logical_deleted_value_false=logical_deleted_value_false)
         self.table = table
         if database is not None and database != '':
             self.table = f'{database}.{table}'
         self.data_source = data_source
-        self.update_by_field = update_by_field
-        self.update_at_field = update_at_field
+        self.updated_by_field = updated_by_field
+        self.updated_at_field = updated_at_field
         self.update_fields = {}
 
     def set(self, field, value) -> 'UpdateWrapper':
@@ -71,8 +71,8 @@ class UpdateWrapper(Wrapper):
             return self.data_source.get_executor().update(sql, args)
 
     def handle_update_fields(self, **options) -> 'UpdateWrapper':
-        if self.update_at_field is not None:
-            self.set(self.update_at_field, datetime.datetime.now())
-        if self.update_by_field is not None:
-            self.set(self.update_by_field, options.get('update_by', 'system'))
+        if self.updated_at_field is not None:
+            self.set(self.updated_at_field, datetime.datetime.now())
+        if self.updated_by_field is not None:
+            self.set(self.updated_by_field, options.get('updated_by', 'system'))
         return self

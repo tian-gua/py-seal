@@ -70,9 +70,9 @@ class Seal:
                             data_source=self.data_source_dict[data_source],
                             tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
                             tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
-                            logic_delete_field=self.get_config_default('seal', 'orm', 'logic_delete_field'),
-                            logic_delete_true=self.get_config_default('seal', 'orm', 'logic_delete_true'),
-                            logic_delete_false=self.get_config_default('seal', 'orm', 'logic_delete_false'),
+                            logical_deleted_field=self.get_config_default('seal', 'orm', 'logical_deleted_field'),
+                            logical_deleted_value_true=self.get_config_default('seal', 'orm', 'logical_deleted_value_true'),
+                            logical_deleted_value_false=self.get_config_default('seal', 'orm', 'logical_deleted_value_false'),
                             )
 
     def update_wrapper(self, table: str, database: str | None = None, data_source: str = 'default') -> UpdateWrapper:
@@ -83,11 +83,11 @@ class Seal:
                              data_source=self.data_source_dict[data_source],
                              tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
                              tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
-                             update_by_field=self.get_config_default('seal', 'orm', 'update_by_field'),
-                             update_at_field=self.get_config_default('seal', 'orm', 'update_at_field'),
-                             logic_delete_field=self.get_config_default('seal', 'orm', 'logic_delete_field'),
-                             logic_delete_true=self.get_config_default('seal', 'orm', 'logic_delete_true'),
-                             logic_delete_false=self.get_config_default('seal', 'orm', 'logic_delete_false'),
+                             updated_by_field=self.get_config_default('seal', 'orm', 'updated_by_field'),
+                             updated_at_field=self.get_config_default('seal', 'orm', 'updated_at_field'),
+                             logical_deleted_field=self.get_config_default('seal', 'orm', 'logical_deleted_field'),
+                             logical_deleted_value_true=self.get_config_default('seal', 'orm', 'logical_deleted_value_true'),
+                             logical_deleted_value_false=self.get_config_default('seal', 'orm', 'logical_deleted_value_false'),
                              )
 
     def insert_wrapper(self, table: str, database: str | None = None, data_source: str = 'default') -> InsertWrapper:
@@ -98,9 +98,9 @@ class Seal:
                              data_source=self.data_source_dict[data_source],
                              tenant_field=self.get_config_default('seal', 'orm', 'tenant_field'),
                              tenant_value=self.get_config_default('seal', 'orm', 'tenant_value'),
-                             logic_delete_field=self.get_config_default('seal', 'orm', 'logic_delete_field'),
-                             logic_delete_true=self.get_config_default('seal', 'orm', 'logic_delete_true'),
-                             logic_delete_false=self.get_config_default('seal', 'orm', 'logic_delete_false'),
+                             logical_deleted_field=self.get_config_default('seal', 'orm', 'logical_deleted_field'),
+                             logical_deleted_value_true=self.get_config_default('seal', 'orm', 'logical_deleted_value_true'),
+                             logical_deleted_value_false=self.get_config_default('seal', 'orm', 'logical_deleted_value_false'),
                              )
 
     # noinspection PyMethodMayBeStatic
