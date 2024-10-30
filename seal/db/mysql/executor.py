@@ -1,6 +1,7 @@
 from typing import Tuple, Any, List
 
 from loguru import logger
+
 from seal.model.result import Result, Results
 from seal.protocol.data_source_protocol import IDataSource
 
@@ -132,23 +133,24 @@ class MysqlExecutor:
 
     def insert_bulk(self, sql: str, args: List[Tuple[Any, ...]]) -> int | None:
         logger.debug(f'#### sql: {sql}')
-        logger.debug(f'#### args: {args}')
-
         sql = sql.replace('?', '%s')
         connection = self.data_source.get_connection()
         connection.begin()
         cursor = connection.cursor()
         try:
-            row_affected = None
-            for args in args:
-                row_affected += cursor.execute(sql, args)
+            row_affected = 0
+            for row_args in args:
+                logger.debug(f'#### args: {row_args}')
+                row_affected += cursor.execute(sql, row_args) or 0
+            logger.debug(f'#### row_affected: {row_affected}')
+            connection.commit()
             return row_affected
         except Exception as e:
             logger.exception(e)
+            connection.rollback()
             raise e
         finally:
             cursor.close()
-            connection.commit()
             connection.close()
 
     def custom_query(self, sql: str, args: Tuple[Any, ...]) -> Results:
