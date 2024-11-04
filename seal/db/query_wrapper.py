@@ -1,11 +1,10 @@
+from dataclasses import fields
 from typing import Any, List, Tuple
 
+from seal.model.result import Result, Results
+from .sql_builder import build_select, build_count
 from .structures import structures
 from .wrapper import Wrapper
-from .sql_builder import build_select, build_count
-from seal.model.result import Result, Results
-from dataclasses import fields
-
 from ..protocol.data_source_protocol import IDataSource
 
 
@@ -55,6 +54,14 @@ class QueryWrapper(Wrapper):
 
     def sort(self, *order_by) -> 'QueryWrapper':
         self.order_by = order_by
+        return self
+
+    def desc(self, *order_by) -> 'QueryWrapper':
+        self.order_by = [f'{field} desc' for field in order_by]
+        return self
+
+    def asc(self, *order_by) -> 'QueryWrapper':
+        self.order_by = [f'{field} asc' for field in order_by]
         return self
 
     def limit(self, limit: int) -> 'QueryWrapper':

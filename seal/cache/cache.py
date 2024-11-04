@@ -1,35 +1,57 @@
-from collections import OrderedDict
-from typing import Any
-from ..exception import UnsupportedException
+import time
 
 
-class LRUCache:
-    def __init__(self, capacity: int):
-        self._cache = OrderedDict()
-        self._capacity = capacity
+class Cache:
+    def __init__(self):
+        self.cache_dict = {}
+        self.count = 0
+        self.has_expired_key = False
 
-    def get(self, key: str) -> Any:
-        if key not in self._cache:
-            return None
+    def set(self, key, value, ttl=None):
+        """
+        ttl unit: second
+        """
+        if ttl is not None:
+            self.cache_dict[key] = CacheItem(key, value, expire_at=int(time.time()) + ttl)
+            self.has_expired_key = True
         else:
-            self._cache.move_to_end(key)  # Mark as recently used
-            return self._cache[key]
+            self.cache_dict[key] = CacheItem(key, value)
 
-    def set(self, key: str, value: Any) -> None:
-        if key in self._cache:
-            self._cache.move_to_end(key)  # Mark as recently used
-        self._cache[key] = value
-        if len(self._cache) > self._capacity:
-            self._cache.popitem(last=False)  # Remove least recently used item
+    def get(self, key):
+        self.remove_expired()
+        if key in self.cache_dict:
+            item = self.cache_dict[key]
+            if item.expire_at is not None and item.expire_at < int(time.time()):
+                del self.cache_dict[key]
+                return None
+            return item.value
+        return None
 
-    def remove(self, key: str) -> None:
-        if key in self._cache:
-            del self._cache[key]
+    def remove(self, key):
+        if key in self.cache_dict:
+            del self.cache_dict[key]
 
-    def remove_prefix(self, prefix: str) -> None:
-        if prefix == '':
-            raise UnsupportedException('Prefix cannot be empty')
+    def remove_expired(self):
+        if not self.has_expired_key:
+            return
 
-        for key in list(self._cache.keys()):
-            if key.startswith(prefix):
-                del self._cache[key]
+        self.count += 1
+        if self.count > 1000:
+            self.count = 0
+
+            will_expired_key_count = 0
+            for k in list(self.cache_dict.keys()):
+                item = self.cache_dict[k]
+                if item.expire_at is not None:
+                    will_expired_key_count += 1
+                    if item.expire_at < int(time.time()):
+                        del self.cache_dict[k]
+            if will_expired_key_count == 0:
+                self.has_expired_key = False
+
+
+class CacheItem:
+    def __init__(self, key, value, expire_at: int | None = None):
+        self.key = key
+        self.value = value
+        self.expire_at = expire_at
