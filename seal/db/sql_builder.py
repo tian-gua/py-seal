@@ -1,7 +1,9 @@
+from typing import Any, Tuple, List, Callable
+
 from loguru import logger
 
 
-def build_select(query_wrapper) -> (str, tuple):
+def build_select(query_wrapper) -> Tuple[str, Tuple[Any, ...]]:
     sql = f'SELECT {",".join(query_wrapper.field_list)} FROM {query_wrapper.table}'
     args = ()
     if len(query_wrapper.condition_tree.conditions) > 0:
@@ -17,7 +19,7 @@ def build_select(query_wrapper) -> (str, tuple):
     return sql, args
 
 
-def build_count(query_wrapper) -> (str, tuple):
+def build_count(query_wrapper) -> Tuple[str, Tuple[Any, ...]]:
     sql = f'SELECT COUNT(1) FROM {query_wrapper.table}'
     args = ()
     if len(query_wrapper.condition_tree.conditions) > 0:
@@ -27,7 +29,7 @@ def build_count(query_wrapper) -> (str, tuple):
     return sql, args
 
 
-def build_update(update_wrapper) -> (str, tuple):
+def build_update(update_wrapper) -> Tuple[str, Tuple[Any, ...]]:
     sql = f'UPDATE {update_wrapper.table} SET {",".join([f"{k}=?" for k in update_wrapper.update_fields.keys()])}'
     args = tuple(update_wrapper.update_fields.values())
     if len(update_wrapper.condition_tree.conditions) > 0:
@@ -37,7 +39,7 @@ def build_update(update_wrapper) -> (str, tuple):
     return sql, args
 
 
-def build_delete(update_wrapper) -> (str, tuple):
+def build_delete(update_wrapper) -> Tuple[str, Tuple[Any, ...]]:
     sql = f'DELETE FROM {update_wrapper.table}'
     args = ()
     if len(update_wrapper.condition_tree.conditions) > 0:
@@ -46,7 +48,7 @@ def build_delete(update_wrapper) -> (str, tuple):
     return sql, args
 
 
-def build_insert(insert_wrapper, data, duplicated_key_update=False, duplicated_key_ignore=False) -> (str, tuple):
+def build_insert(insert_wrapper, data, duplicated_key_update=False, duplicated_key_ignore=False) -> Tuple[str, Tuple[Any, ...]]:
     keys = None
     if isinstance(data, dict):
         keys = data.keys()
@@ -64,8 +66,7 @@ def build_insert(insert_wrapper, data, duplicated_key_update=False, duplicated_k
     return sql, args
 
 
-def build_insert_bulk(insert_wrapper, data_list, duplicated_key_update=False, duplicated_key_ignore=False) -> (
-        str, list[tuple]):
+def build_insert_bulk(insert_wrapper, data_list, duplicated_key_update=False, duplicated_key_ignore=False) -> Tuple[str, List[Tuple[Any, ...]]]:
     keys = None
     data = data_list[0]
     if isinstance(data, dict):
@@ -91,7 +92,7 @@ def build_insert_bulk(insert_wrapper, data_list, duplicated_key_update=False, du
     return sql, args
 
 
-def build_insert_iterator(insert_wrapper, data_list, duplicated_key_update=False, duplicated_key_ignore=False):
+def build_insert_iterator(insert_wrapper, data_list, duplicated_key_update=False, duplicated_key_ignore=False) -> Callable[..., None]:
     keys = None
     if isinstance(data_list[0], dict):
         keys = data_list[0].keys()

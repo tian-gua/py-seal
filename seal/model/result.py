@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 
 class Result:
-    def __init__(self, row: Dict = None, bean_type=None):
+    def __init__(self, row: Dict[str, Any] = None, bean_type=None):
         self.row = row
         self.bean_type = bean_type
 
@@ -20,14 +20,14 @@ class Result:
             return self.bean_type(**self.row)
         return None
 
-    def as_dict(self) -> Dict | None:
+    def as_dict(self) -> Dict[str, Any] | None:
         if self.row is not None:
             return self.row
         return None
 
 
 class Results:
-    def __init__(self, rows: List[Dict] = None, bean_type=None):
+    def __init__(self, rows: List[Dict[str, Any]] = None, bean_type=None):
         self.rows = rows
         self.bean_type = bean_type
 

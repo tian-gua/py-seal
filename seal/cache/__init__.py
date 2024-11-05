@@ -1,1 +1,2 @@
-from .cache import LRUCache
+from .lru_cache import LRUCache
+from .cache import Cache
