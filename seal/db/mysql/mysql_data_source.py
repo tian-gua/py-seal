@@ -1,8 +1,8 @@
 from typing import Dict, Any
 
-from .table_info import TableField, TableInfo
 from .connection_pool import ConnectionPool
 from .executor import MysqlExecutor
+from .table_info import TableField, TableInfo
 from ...protocol.executor_protocol import IExecutor
 
 
@@ -31,6 +31,7 @@ class MysqlDataSource:
 
     def load_structure(self, data_source: str, table: str) -> Any:
         conn = self.get_connection()
+        conn.begin()
         c = conn.cursor()
         try:
             c.execute(f'show columns from {data_source}.{table}')
@@ -49,4 +50,5 @@ class MysqlDataSource:
             return table_info.parse_model()
         finally:
             c.close()
+            conn.commit()
             conn.close()
