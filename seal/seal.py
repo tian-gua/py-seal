@@ -1,29 +1,36 @@
+from datetime import datetime, timedelta
 from typing import Any, Dict
 
+import jwt
 from loguru import logger
 
 from seal.model.result import Results
 from .cache import LRUCache, Cache
-from .config import Configuration
+from .config import configurator
 from .db.insert_wrapper import InsertWrapper
 from .db.query_wrapper import QueryWrapper
 from .db.structures import structures
 from .db.update_wrapper import UpdateWrapper
 from .db.wrapper import Wrapper
 from .protocol.data_source_protocol import IDataSource
+from .router import get, post, put, delete
 
 
 class Seal:
 
     def __init__(self):
-        self._configuration = Configuration()
         self._initialized = False
         self.data_source_dict: Dict[str, IDataSource] = {}
         self._lru_cache: LRUCache = LRUCache(102400)
         self._cache = Cache()
 
+        self.get = get
+        self.post = post
+        self.put = put
+        self.delete = delete
+
     def init(self, config_path):
-        self._configuration.load(config_path)
+        configurator.load(config_path)
         self._initialized = True
 
         logger.add(self.get_config('seal', 'loguru', 'path'),
@@ -56,12 +63,12 @@ class Seal:
     def get_config(self, *keys):
         if not self._initialized:
             raise ValueError('uninitialized seal')
-        return self._configuration.get_conf(*keys)
+        return configurator.get_config(*keys)
 
     def get_config_default(self, *keys, default=None):
         if not self._initialized:
             raise ValueError('uninitialized seal')
-        return self._configuration.get_conf_default(*keys, default=default)
+        return configurator.get_conf_default(*keys, default=default)
 
     def query_wrapper(self, table: str, database: str | None = None, data_source: str = 'default', disable_logical_deleted=False) -> QueryWrapper:
         if database is None:
@@ -148,3 +155,11 @@ class Seal:
 
     def memory_cache(self) -> Cache:
         return self._cache
+
+    def generate_token(**payloads):
+        try:
+            payloads["exp"] = datetime.now() + timedelta(seconds=configurator.get_config('seal', 'authorization', 'expire'))
+            token = jwt.encode(payloads, configurator.get_config('seal', 'authorization', 'jwt_key'), algorithm="HS256")
+        except Exception as e:
+            raise Exception(f"Token generation failed: {e}")
+        return token
