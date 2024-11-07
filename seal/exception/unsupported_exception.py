@@ -1,6 +1,6 @@
 class UnsupportedException(Exception):
 
-    def __init__(self, code=1, message='不支持此操作'):
+    def __init__(self, code=1, message='unsupported operation'):
         self.code = code
         self.message = message
 

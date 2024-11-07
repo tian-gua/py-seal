@@ -7,6 +7,7 @@ from loguru import logger
 from seal.model.result import Results
 from .cache import LRUCache, Cache
 from .config import configurator
+from .context import ctx_get, ctx_set, ctx_uid
 from .db.insert_wrapper import InsertWrapper
 from .db.query_wrapper import QueryWrapper
 from .db.structures import structures
@@ -41,14 +42,14 @@ class Seal:
         data_source_config = self.get_config('seal', 'data_source')
         for data_source_name, data_source_conf in data_source_config.items():
             data_source = self.get_config('seal', 'data_source', data_source_name)
-            if 'mysql' == data_source.get('type'):
+            if 'mysql' == data_source.get('dialect'):
                 from .db.mysql.mysql_data_source import MysqlDataSource
                 self.data_source_dict[data_source_name] = MysqlDataSource(name=data_source_name, conf=data_source_conf)
-            elif 'sqlite' == data_source.get('type'):
+            elif 'sqlite' == data_source.get('dialect'):
                 from .db.sqlite.sqlite_data_source import SqliteDataSource
                 self.data_source_dict[data_source_name] = SqliteDataSource(name=data_source_name, conf=data_source_conf)
             else:
-                raise ValueError(f'不支持的数据源类型: {data_source.get("type")}')
+                raise ValueError(f'不支持的数据源类型: {data_source.get("dialect")}')
 
         if 'default' not in self.data_source_dict:
             raise ValueError('unknown default data source')
@@ -156,10 +157,23 @@ class Seal:
     def memory_cache(self) -> Cache:
         return self._cache
 
-    def generate_token(**payloads):
+    # noinspection PyMethodMayBeStatic
+    def generate_token(self, **payloads):
         try:
             payloads["exp"] = datetime.now() + timedelta(seconds=configurator.get_config('seal', 'authorization', 'expire'))
             token = jwt.encode(payloads, configurator.get_config('seal', 'authorization', 'jwt_key'), algorithm="HS256")
         except Exception as e:
             raise Exception(f"Token generation failed: {e}")
         return token
+
+    # noinspection PyMethodMayBeStatic
+    def ctx_uid(self):
+        return ctx_uid()
+
+    # noinspection PyMethodMayBeStatic
+    def ctx_get(self):
+        return ctx_get()
+
+    # noinspection PyMethodMayBeStatic
+    def ctx_set(self, value: dict):
+        return ctx_set(value)

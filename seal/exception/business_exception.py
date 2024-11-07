@@ -1,6 +1,6 @@
 class BusinessException(Exception):
 
-    def __init__(self, code=1, message='业务异常'):
+    def __init__(self, code=1, message='business error'):
         self.code = code
         self.message = message
 
