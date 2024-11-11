@@ -7,7 +7,7 @@ from loguru import logger
 from seal.model.result import Results
 from .cache import LRUCache, Cache
 from .config import configurator
-from .context import ctx_get, ctx_set, ctx_uid
+from .context import web_context, WebContext
 from .db.insert_wrapper import InsertWrapper
 from .db.query_wrapper import QueryWrapper
 from .db.structures import structures
@@ -29,6 +29,8 @@ class Seal:
         self.post = post
         self.put = put
         self.delete = delete
+
+        self._web_context = web_context
 
     def init(self, config_path):
         configurator.load(config_path)
@@ -166,14 +168,5 @@ class Seal:
             raise Exception(f"Token generation failed: {e}")
         return token
 
-    # noinspection PyMethodMayBeStatic
-    def ctx_uid(self):
-        return ctx_uid()
-
-    # noinspection PyMethodMayBeStatic
-    def ctx_get(self):
-        return ctx_get()
-
-    # noinspection PyMethodMayBeStatic
-    def ctx_set(self, value: dict):
-        return ctx_set(value)
+    def web_context(self) -> WebContext:
+        return self._web_context.get()

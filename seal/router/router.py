@@ -1,15 +1,17 @@
 import asyncio
-import time
 import re
+import time
 from functools import wraps
+
 import jwt
 from fastapi import FastAPI, Request, Response, HTTPException, Depends
-from starlette.middleware.cors import CORSMiddleware
-from ..context import ctx_set
-from ..model import Response as ResponseModel
-from ..exception import BusinessException
-from ..config import configurator
 from loguru import logger
+from starlette.middleware.cors import CORSMiddleware
+
+from ..config import configurator
+from ..context import web_context
+from ..exception import BusinessException
+from ..model import Response as ResponseModel
 
 
 async def verify_token(request: Request = Request):
@@ -26,7 +28,7 @@ async def verify_token(request: Request = Request):
         payload = jwt.decode(request.headers['Authorization'],
                              configurator.get_config('seal', 'authorization', 'jwt_key'),
                              algorithms=["HS256"])
-        ctx_set({'uid': payload['uid']})
+        web_context.get().set_uid(payload['uid'])
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Token is invalid: {e}")
 
