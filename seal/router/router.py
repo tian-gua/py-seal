@@ -41,6 +41,7 @@ async def calc_time(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time
+    logger.info(f'{request.method} {request.url.path} {response.status_code} {process_time}')
     response.headers["X-Process-Time"] = str(process_time)
     return response
 
@@ -60,13 +61,15 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return Response(status_code=exc.status_code, content=exc.detail)
 
 
-def response_body(func):
+def response_body(func, **kwargs):
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*fun_args, **fun_kwargs):
         try:
-            task = asyncio.create_task(func(*args, **kwargs))
+            task = asyncio.create_task(func(*fun_args, **fun_kwargs))
             result = await task
-            return ResponseModel.build(result).success()
+            if 'response_model' in kwargs and type(kwargs.get('response_model')) == type(ResponseModel):
+                return ResponseModel.build(result).success()
+            return result
         except BusinessException as e:
             logger.exception(e)
             return ResponseModel.build().error(message=e.message, code=e.code)
@@ -77,29 +80,37 @@ def response_body(func):
     return wrapper
 
 
-def get(path: str):
+def get(path: str, **kwargs):
     def decorator(func):
-        return app.get(path, response_model=ResponseModel)(response_body(func))
+        if 'response_model' not in kwargs and 'response_class' not in kwargs:
+            kwargs['response_model'] = ResponseModel
+        return app.get(path, **kwargs)(response_body(func, **kwargs))
 
     return decorator
 
 
-def post(path: str):
+def post(path: str, **kwargs):
     def decorator(func):
-        return app.post(path, response_model=ResponseModel)(response_body(func))
+        if 'response_model' not in kwargs and 'response_class' not in kwargs:
+            kwargs['response_model'] = ResponseModel
+        return app.post(path, **kwargs)(response_body(func, **kwargs))
 
     return decorator
 
 
-def delete(path: str):
+def delete(path: str, **kwargs):
     def decorator(func):
-        return app.delete(path, response_model=ResponseModel)(response_body(func))
+        if 'response_model' not in kwargs and 'response_class' not in kwargs:
+            kwargs['response_model'] = ResponseModel
+        return app.delete(path, **kwargs)(response_body(func, **kwargs))
 
     return decorator
 
 
-def put(path: str):
+def put(path: str, **kwargs):
     def decorator(func):
-        return app.put(path, response_model=ResponseModel)(response_body(func))
+        if 'response_model' not in kwargs and 'response_class' not in kwargs:
+            kwargs['response_model'] = ResponseModel
+        return app.put(path, **kwargs)(response_body(func, **kwargs))
 
     return decorator
