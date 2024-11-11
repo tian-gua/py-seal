@@ -102,3 +102,6 @@ class DelegateConnection:
 
     def ping(self):
         self.connection.ping(reconnect=True)
+
+    def insert_id(self):
+        return self.connection.insert_id()
