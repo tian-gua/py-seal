@@ -1,18 +1,18 @@
 from contextvars import ContextVar
 
-web_ctx = ContextVar('web', default={})
+
+class WebContext:
+    def __init__(self, uid=None):
+        self.uid = uid
+
+    def set_uid(self, uid):
+        self.uid = uid
+
+    def get_uid(self):
+        return self.uid
+
+    def set(self, key, value):
+        setattr(self, key, value)
 
 
-def ctx_get():
-    return web_ctx.get()
-
-
-def ctx_set(value: dict):
-    web_ctx.set(value)
-
-
-def ctx_uid():
-    var = ctx_get()
-    if 'uid' not in var:
-        return None
-    return var['uid']
+web_context = ContextVar('web', default=WebContext())

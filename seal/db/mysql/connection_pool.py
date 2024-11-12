@@ -1,7 +1,9 @@
 import time
+from typing import Optional
+
 import pymysql
-from pymysql.cursors import DictCursor
 from pymysql.connections import Connection as PyMySQLConnection
+from pymysql.cursors import DictCursor
 
 
 class ConnectionPool:
@@ -34,6 +36,7 @@ class ConnectionPool:
 
         connection = self.occupy()
         if connection is not None:
+            connection.ping()
             return connection
 
         if len(self._connections) < self._max_connections:
@@ -54,9 +57,10 @@ class ConnectionPool:
 
             connection = self.occupy()
             if connection is not None:
+                connection.ping()
                 return connection
 
-    def occupy(self):
+    def occupy(self) -> Optional['DelegateConnection']:
         for connection in self._connections:
             if connection.status == 'idle':
                 connection.occupy()
@@ -94,5 +98,10 @@ class DelegateConnection:
         self.connection.rollback()
 
     def begin(self):
-        self.connection.ping(reconnect=True)
         self.connection.begin()
+
+    def ping(self):
+        self.connection.ping(reconnect=True)
+
+    def insert_id(self):
+        return self.connection.insert_id()

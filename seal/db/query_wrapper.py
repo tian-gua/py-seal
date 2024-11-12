@@ -79,7 +79,7 @@ class QueryWrapper(Wrapper):
             return result.as_dict()
         return result.get()
 
-    def one_dict(self, **options) -> dict:
+    def d_one(self, **options) -> dict:
         return self.one(as_dict=True, **options)
 
     def list(self, as_dict=False, **options) -> List[Any]:
@@ -89,7 +89,7 @@ class QueryWrapper(Wrapper):
             return results.as_dict()
         return results.get()
 
-    def list_dict(self, **options) -> List[dict]:
+    def d_list(self, **options) -> List[dict]:
         return self.list(as_dict=True, **options)
 
     def page(self, page: int, page_size: int, as_dict=False, **options) -> Tuple[List[Any], int]:
@@ -102,7 +102,7 @@ class QueryWrapper(Wrapper):
             return results.as_dict(), count
         return results.get(), count
 
-    def page_dict(self, page: int, page_size: int, **options) -> Tuple[List[dict], int]:
+    def d_page(self, page: int, page_size: int, **options) -> Tuple[List[dict], int]:
         return self.page(page, page_size, as_dict=True, **options)
 
     def count(self):

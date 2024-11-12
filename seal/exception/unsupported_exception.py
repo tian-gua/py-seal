@@ -1,6 +1,6 @@
-class BusinessException(Exception):
+class UnsupportedException(Exception):
 
-    def __init__(self, code=1, message='业务异常'):
+    def __init__(self, code=1, message='unsupported operation'):
         self.code = code
         self.message = message
 

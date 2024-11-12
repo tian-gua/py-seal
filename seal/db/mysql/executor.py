@@ -30,7 +30,6 @@ class MysqlExecutor:
 
             return Result(row=row, bean_type=bean_type)
         except Exception as e:
-            logger.exception(e)
             raise e
         finally:
             cursor.close()
@@ -56,7 +55,6 @@ class MysqlExecutor:
 
             return Results(rows=rows, bean_type=bean_type)
         except Exception as e:
-            logger.exception(e)
             raise e
         finally:
             cursor.close()
@@ -82,7 +80,6 @@ class MysqlExecutor:
 
             return row['COUNT(1)']
         except Exception as e:
-            logger.exception(e)
             raise e
         finally:
             cursor.close()
@@ -103,7 +100,6 @@ class MysqlExecutor:
                 return None
             return result
         except Exception as e:
-            logger.exception(e)
             raise e
         finally:
             cursor.close()
@@ -122,9 +118,8 @@ class MysqlExecutor:
             result = cursor.execute(sql, args)
             if result is None:
                 return None
-            return result
+            return connection.insert_id()
         except Exception as e:
-            logger.exception(e)
             raise e
         finally:
             cursor.close()
@@ -146,7 +141,6 @@ class MysqlExecutor:
             connection.commit()
             return row_affected
         except Exception as e:
-            logger.exception(e)
             connection.rollback()
             raise e
         finally:
@@ -172,7 +166,6 @@ class MysqlExecutor:
 
             return Results(rows=rows)
         except Exception as e:
-            logger.exception(e)
             raise e
         finally:
             cursor.close()
@@ -193,7 +186,6 @@ class MysqlExecutor:
                 return None
             return result
         except Exception as e:
-            logger.exception(e)
             raise e
         finally:
             cursor.close()
