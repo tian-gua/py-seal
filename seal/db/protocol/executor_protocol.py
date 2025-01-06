@@ -1,6 +1,6 @@
 from typing import Protocol, Tuple, Any, List
 
-from ..model.result import Result, Results
+from seal.model.result import Result, Results
 
 
 class IExecutor(Protocol):

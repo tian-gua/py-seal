@@ -5,7 +5,7 @@ from seal.model.result import Result, Results
 from .sql_builder import build_select, build_count
 from .structures import structures
 from .wrapper import Wrapper
-from ..protocol.data_source_protocol import IDataSource
+from seal.db.protocol import IDataSource
 
 
 class QueryWrapper(Wrapper):

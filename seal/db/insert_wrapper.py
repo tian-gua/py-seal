@@ -1,7 +1,7 @@
 from dataclasses import fields
 from .sql_builder import build_insert, build_insert_bulk
 from .structures import structures
-from ..protocol.data_source_protocol import IDataSource
+from seal.db.protocol import IDataSource
 
 
 class InsertWrapper:

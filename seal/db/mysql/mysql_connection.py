@@ -1,16 +1,46 @@
 import time
-from typing import Optional
 
 import pymysql
 from pymysql.connections import Connection as PyMySQLConnection
 from pymysql.cursors import DictCursor
+
+from seal.enum.connection_status import ConnectionStatus
+
+
+class MysqlConnection:
+    def __init__(self, connection: PyMySQLConnection, pool: 'ConnectionPool', create_time=time.time()):
+        self.connection: PyMySQLConnection = connection
+        self.pool: ConnectionPool = pool
+        self.status: ConnectionStatus = ConnectionStatus.IDLE
+        self.create_time = create_time
+
+    def close(self):
+        self.pool.release(self)
+
+    def cursor(self):
+        return self.connection.cursor()
+
+    def commit(self):
+        self.connection.commit()
+
+    def rollback(self):
+        self.connection.rollback()
+
+    def begin(self):
+        self.connection.begin()
+
+    def ping(self):
+        self.connection.ping(reconnect=True)
+
+    def insert_id(self):
+        return self.connection.insert_id()
 
 
 class ConnectionPool:
     def __init__(self, conf):
         self.conf = conf
 
-        self._connections: list[DelegateConnection] = []
+        self._connections: list[MysqlConnection] = []
         self._min_connections = conf['pool']['min_connections']
         self._max_connections = conf['pool']['max_connections']
 
@@ -21,7 +51,7 @@ class ConnectionPool:
                                                                   password=conf['password'].encode('utf-8'),
                                                                   database=conf['database'],
                                                                   cursorclass=DictCursor)
-            self._connections.append(DelegateConnection(mysql_connection, self))
+            self._connections.append(MysqlConnection(mysql_connection, self))
 
     def new_connection(self):
         return pymysql.connect(host=self.conf['host'],
@@ -31,7 +61,7 @@ class ConnectionPool:
                                database=self.conf['database'],
                                cursorclass=DictCursor)
 
-    def get_connection(self, timeout=None):
+    def get_connection(self, timeout=3):
         start_time = time.time()
 
         connection = self.occupy()
@@ -41,8 +71,8 @@ class ConnectionPool:
 
         if len(self._connections) < self._max_connections:
             mysql_connection = self.new_connection()
-            connection = DelegateConnection(mysql_connection, self)
-            connection.occupy()
+            connection = MysqlConnection(mysql_connection, self)
+            connection.status = ConnectionStatus.OCCUPIED
             self._connections.append(connection)
             return connection
 
@@ -60,48 +90,16 @@ class ConnectionPool:
                 connection.ping()
                 return connection
 
-    def occupy(self) -> Optional['DelegateConnection']:
+    def occupy(self) -> MysqlConnection | None:
         for connection in self._connections:
-            if connection.status == 'idle':
-                connection.occupy()
+            if connection.status == ConnectionStatus.IDLE:
+                connection.status = ConnectionStatus.OCCUPIED
                 return connection
         return None
 
-    def release(self, delegate_connection):
+    def release(self, mysql_connection: MysqlConnection):
         if len(self._connections) > self._min_connections:
-            delegate_connection.connection.close()
-            self._connections.remove(delegate_connection)
+            mysql_connection.connection.close()
+            self._connections.remove(mysql_connection)
         else:
-            delegate_connection.status = 'idle'
-
-
-class DelegateConnection:
-    def __init__(self, connection: PyMySQLConnection, pool: ConnectionPool, create_time=time.time()):
-        self.connection: PyMySQLConnection = connection
-        self.pool: ConnectionPool = pool
-        self.status = 'idle'
-        self.create_time = create_time
-
-    def close(self):
-        self.pool.release(self)
-
-    def cursor(self):
-        return self.connection.cursor()
-
-    def occupy(self):
-        self.status = 'occupied'
-
-    def commit(self):
-        self.connection.commit()
-
-    def rollback(self):
-        self.connection.rollback()
-
-    def begin(self):
-        self.connection.begin()
-
-    def ping(self):
-        self.connection.ping(reconnect=True)
-
-    def insert_id(self):
-        return self.connection.insert_id()
+            mysql_connection.status = ConnectionStatus.IDLE
