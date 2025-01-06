@@ -2,7 +2,7 @@ from typing import Any, Tuple, List
 
 from loguru import logger
 from seal.model.result import Result, Results
-from seal.protocol.data_source_protocol import IDataSource
+from seal.db.protocol.data_source_protocol import IDataSource
 
 
 class SqliteExecutor:

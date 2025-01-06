@@ -1,9 +1,11 @@
 import sqlite3
+from sqlite3 import Connection
 from typing import Any, Dict
 
+from .sqlite_connection import SqliteConnection
 from .table_info import TableField, TableInfo
 from .executor import SqliteExecutor
-from ...protocol.executor_protocol import IExecutor
+from seal.db.protocol import IExecutor, IDatabaseConnection
 
 
 def dict_factory(cursor, row):
@@ -29,10 +31,11 @@ class SqliteDataSource:
     def get_executor(self) -> IExecutor:
         return self.executor
 
-    def get_connection(self):
-        conn = sqlite3.connect(self.src)
+    def get_connection(self) -> IDatabaseConnection:
+        conn: Connection = sqlite3.connect(self.src)
         conn.row_factory = dict_factory
-        return conn
+        sqlite_connection: SqliteConnection = SqliteConnection(conn)
+        return sqlite_connection
 
     # noinspection PyMethodMayBeStatic
     def get_default_database(self) -> str:

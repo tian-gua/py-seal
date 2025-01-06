@@ -1,9 +1,9 @@
 from typing import Dict, Any
 
-from .connection_pool import ConnectionPool
+from seal.db.protocol import IExecutor
 from .executor import MysqlExecutor
+from .mysql_connection import ConnectionPool
 from .table_info import TableField, TableInfo
-from ...protocol.executor_protocol import IExecutor
 
 
 class MysqlDataSource:
@@ -21,7 +21,7 @@ class MysqlDataSource:
         return 'mysql'
 
     def get_connection(self):
-        return self.connection_pool.get_connection(10)
+        return self.connection_pool.get_connection()
 
     def get_executor(self) -> IExecutor:
         return self.executor

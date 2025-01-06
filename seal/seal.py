@@ -4,16 +4,12 @@ from typing import Any, Dict
 import jwt
 from loguru import logger
 
+from seal.db.protocol import IDataSource
 from seal.model.result import Results
 from .cache import LRUCache, Cache
 from .config import configurator
 from .context import web_context, WebContext
-from .db.insert_wrapper import InsertWrapper
-from .db.query_wrapper import QueryWrapper
-from .db.structures import structures
-from .db.update_wrapper import UpdateWrapper
-from .db.wrapper import Wrapper
-from .protocol.data_source_protocol import IDataSource
+from .db import Wrapper, sql_context, InsertWrapper, QueryWrapper, UpdateWrapper, structures
 from .router import get, post, put, delete
 
 
@@ -170,3 +166,15 @@ class Seal:
 
     def web_context(self) -> WebContext:
         return self._web_context.get()
+
+    # noinspection PyMethodMayBeStatic
+    def begin_tx(self, data_source: str = 'default'):
+        sql_context.get().begin(self.data_source_dict[data_source])
+
+    # noinspection PyMethodMayBeStatic
+    def commit_tx(self):
+        sql_context.get().commit()
+
+    # noinspection PyMethodMayBeStatic
+    def rollback_tx(self):
+        sql_context.get().rollback()

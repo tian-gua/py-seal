@@ -15,4 +15,4 @@ class WebContext:
         setattr(self, key, value)
 
 
-web_context = ContextVar('web', default=WebContext())
+web_context = ContextVar('web_context', default=WebContext())

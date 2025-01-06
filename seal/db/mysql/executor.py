@@ -2,8 +2,10 @@ from typing import Tuple, Any, List
 
 from loguru import logger
 
+from seal.db.protocol import IDatabaseConnection
+from seal.db.protocol.data_source_protocol import IDataSource
+from seal.db.transaction import sql_context
 from seal.model.result import Result, Results
-from seal.protocol.data_source_protocol import IDataSource
 
 
 class MysqlExecutor:
@@ -12,14 +14,12 @@ class MysqlExecutor:
         self.data_source = data_source
 
     def find(self, sql: str, args: Tuple[Any, ...], bean_type: Any) -> Result:
-        logger.debug(f'#### sql: {sql}')
-        logger.debug(f'#### args: {args}')
+        self.debug(sql, args)
 
-        sql = sql.replace('?', '%s')
-        connection = self.data_source.get_connection()
-        connection.begin()
+        connection: IDatabaseConnection = self.get_connection()
         cursor = connection.cursor()
         try:
+            sql = sql.replace('?', '%s')
             result = cursor.execute(sql, args)
             if result is None:
                 return Result.empty()
@@ -33,18 +33,15 @@ class MysqlExecutor:
             raise e
         finally:
             cursor.close()
-            connection.commit()
-            connection.close()
+            self.close_connection(connection)
 
     def find_list(self, sql: str, args: Tuple[Any, ...], bean_type: Any) -> Results:
-        logger.debug(f'#### sql: {sql}')
-        logger.debug(f'#### args: {args}')
+        self.debug(sql, args)
 
-        sql = sql.replace('?', '%s')
-        connection = self.data_source.get_connection()
-        connection.begin()
+        connection: IDatabaseConnection = self.get_connection()
         cursor = connection.cursor()
         try:
+            sql = sql.replace('?', '%s')
             result = cursor.execute(sql, args)
             if result is None:
                 return Results.empty()
@@ -58,18 +55,15 @@ class MysqlExecutor:
             raise e
         finally:
             cursor.close()
-            connection.commit()
-            connection.close()
+            self.close_connection(connection)
 
     def count(self, sql: str, args: Tuple[Any, ...]) -> int | None:
-        logger.debug(f'#### sql: {sql}')
-        logger.debug(f'#### args: {args}')
+        self.debug(sql, args)
 
-        sql = sql.replace('?', '%s')
-        connection = self.data_source.get_connection()
-        connection.begin()
+        connection: IDatabaseConnection = self.get_connection()
         cursor = connection.cursor()
         try:
+            sql = sql.replace('?', '%s')
             result = cursor.execute(sql, args)
             if result is None:
                 return None
@@ -83,18 +77,15 @@ class MysqlExecutor:
             raise e
         finally:
             cursor.close()
-            connection.commit()
-            connection.close()
+            self.close_connection(connection)
 
     def update(self, sql: str, args: Tuple[Any, ...]) -> int | None:
-        logger.debug(f'#### sql: {sql}')
-        logger.debug(f'#### args: {args}')
+        self.debug(sql, args)
 
-        sql = sql.replace('?', '%s')
-        connection = self.data_source.get_connection()
-        connection.begin()
+        connection: IDatabaseConnection = self.get_connection()
         cursor = connection.cursor()
         try:
+            sql = sql.replace('?', '%s')
             result = cursor.execute(sql, args)
             if result is None:
                 return None
@@ -103,36 +94,32 @@ class MysqlExecutor:
             raise e
         finally:
             cursor.close()
-            connection.commit()
-            connection.close()
+            self.close_connection(connection)
 
     def insert(self, sql: str, args: Tuple[Any, ...]) -> int | None:
-        logger.debug(f'#### sql: {sql}')
-        logger.debug(f'#### args: {args}')
+        self.debug(sql, args)
 
-        sql = sql.replace('?', '%s')
-        connection = self.data_source.get_connection()
-        connection.begin()
+        connection: IDatabaseConnection = self.get_connection()
         cursor = connection.cursor()
         try:
+            sql = sql.replace('?', '%s')
             result = cursor.execute(sql, args)
             if result is None:
                 return None
-            return connection.insert_id()
+            return cursor.lastrowid
         except Exception as e:
             raise e
         finally:
             cursor.close()
-            connection.commit()
-            connection.close()
+            self.close_connection(connection)
 
     def insert_bulk(self, sql: str, args: List[Tuple[Any, ...]]) -> int | None:
         logger.debug(f'#### sql: {sql}')
-        sql = sql.replace('?', '%s')
-        connection = self.data_source.get_connection()
-        connection.begin()
+
+        connection: IDatabaseConnection = self.get_connection()
         cursor = connection.cursor()
         try:
+            sql = sql.replace('?', '%s')
             row_affected = 0
             for row_args in args:
                 logger.debug(f'#### args: {row_args}')
@@ -145,17 +132,15 @@ class MysqlExecutor:
             raise e
         finally:
             cursor.close()
-            connection.close()
+            self.close_connection(connection)
 
     def custom_query(self, sql: str, args: Tuple[Any, ...]) -> Results:
-        logger.debug(f'#### sql: {sql}')
-        logger.debug(f'#### args: {args}')
+        self.debug(sql, args)
 
-        sql = sql.replace('?', '%s')
-        connection = self.data_source.get_connection()
-        connection.begin()
+        connection: IDatabaseConnection = self.get_connection()
         cursor = connection.cursor()
         try:
+            sql = sql.replace('?', '%s')
             result = cursor.execute(sql, args)
             if result is None:
                 return Results.empty()
@@ -169,18 +154,15 @@ class MysqlExecutor:
             raise e
         finally:
             cursor.close()
-            connection.commit()
-            connection.close()
+            self.close_connection(connection)
 
     def custom_update(self, sql: str, args: Tuple[Any, ...]) -> int | None:
-        logger.debug(f'#### sql: {sql}')
-        logger.debug(f'#### args: {args}')
+        self.debug(sql, args)
 
-        sql = sql.replace('?', '%s')
-        connection = self.data_source.get_connection()
-        connection.begin()
+        connection: IDatabaseConnection = self.get_connection()
         cursor = connection.cursor()
         try:
+            sql = sql.replace('?', '%s')
             result = cursor.execute(sql, args)
             if result is None:
                 return None
@@ -189,5 +171,28 @@ class MysqlExecutor:
             raise e
         finally:
             cursor.close()
+            self.close_connection(connection)
+
+    def get_connection(self) -> IDatabaseConnection:
+        ctx = sql_context.get()
+        connection: IDatabaseConnection = ctx.tx() or self.data_source.get_connection()
+
+        if ctx.tx() is None:
+            connection.begin()
+
+        return connection
+
+    # noinspection PyMethodMayBeStatic
+    def close_connection(self, connection: IDatabaseConnection):
+        ctx = sql_context.get()
+        if ctx.tx() is None:
             connection.commit()
             connection.close()
+
+    # noinspection PyMethodMayBeStatic
+    def debug(self, sql, args):
+        logger.debug(f'#### sql: {sql}')
+        logger.debug(f'#### args: {args}')
+        # ctx = sql_context.get()
+        # if ctx.tx() is not None:
+        #     logger.debug(f'#### Transaction id: {ctx.tx_id()}')
