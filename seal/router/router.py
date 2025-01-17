@@ -40,6 +40,8 @@ async def verify_token(request: Request = Request):
                              algorithms=["HS256"])
         web_context.get().set_uid(payload['uid'])
     except Exception as e:
+        if ignore:
+            return None
         raise HTTPException(status_code=401, detail=f"Token is invalid: {e}")
 
 

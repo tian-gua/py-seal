@@ -1,8 +1,11 @@
+from ..enum.operator import Operator
+
+
 class Condition:
-    def __init__(self, field, value, operator='='):
-        self.field = field
-        self.value = value
-        self.operator = operator
+    def __init__(self, field: str, value: any, operator: Operator = Operator.EQ):
+        self.field: str = field
+        self.value: any = value
+        self.operator: Operator = operator
 
     def parse(self):
         return f'{self.field} {self.operator} ?', self.value

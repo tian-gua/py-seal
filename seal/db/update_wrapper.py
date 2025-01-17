@@ -1,8 +1,8 @@
 import datetime
-
-from .wrapper import Wrapper
-from .sql_builder import build_update, build_delete
 from dataclasses import fields
+
+from .sql_builder import build_update, build_delete
+from .wrapper import Wrapper
 
 
 class UpdateWrapper(Wrapper):
