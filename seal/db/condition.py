@@ -8,7 +8,7 @@ class Condition:
         self.operator: Operator = operator
 
     def parse(self):
-        return f'{self.field} {self.operator} ?', self.value
+        return f'{self.field} {self.operator.value} ?', self.value
 
 
 class ConditionTree:
