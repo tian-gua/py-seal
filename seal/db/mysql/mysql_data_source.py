@@ -29,12 +29,12 @@ class MysqlDataSource:
     def get_default_database(self) -> str:
         return self.default_database
 
-    def load_structure(self, data_source: str, table: str) -> Any:
+    def load_structure(self, database: str, table: str) -> Any:
         conn = self.get_connection()
         conn.begin()
         c = conn.cursor()
         try:
-            c.execute(f'show columns from {data_source}.{table}')
+            c.execute(f'show columns from {database}.{table}')
             rows = c.fetchall()
             table_fields = []
             for row in rows:
