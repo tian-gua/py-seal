@@ -20,3 +20,6 @@ class SqliteConnection:
 
     def begin(self):
         self.connection.execute("BEGIN TRANSACTION")
+
+    def ping(self, seconds):
+        pass

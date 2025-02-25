@@ -1,8 +1,8 @@
-fastapi==0.111.1
+fastapi==0.115.8
 pydantic==2.8.2
 PyJWT==2.9.0
-starlette==0.38.2
-uvicorn==0.30.6
+starlette==0.41.0
+uvicorn==0.32.0
 PyMySQL~=1.1.1
 PyYAML==6.0.2
 setuptools==72.2.0

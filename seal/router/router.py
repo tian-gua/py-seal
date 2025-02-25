@@ -17,19 +17,31 @@ from ..model import Response as ResponseModel
 async def verify_token(request: Request = Request):
     if request.method == 'OPTIONS':
         return None
+
+    ignore = False
     path = request.url.path
     urls = configurator.get_config('seal', 'authorization', 'excludes')
     for url in urls:
         # * -> [a-zA-Z0-9_\-]*, ** -> .*
         url = url.replace('*', '[a-zA-Z0-9_\-]*').replace('**', '.*')
         if re.match(url, path):
-            return None
+            ignore = True
+            break
+
     try:
-        payload = jwt.decode(request.headers['Authorization'],
+        token = request.headers.get('Authorization', None)
+        if token is None or token == '':
+            if ignore:
+                return None
+            raise HTTPException(status_code=401, detail="Token is required")
+
+        payload = jwt.decode(token,
                              configurator.get_config('seal', 'authorization', 'jwt_key'),
                              algorithms=["HS256"])
         web_context.get().set_uid(payload['uid'])
     except Exception as e:
+        if ignore:
+            return None
         raise HTTPException(status_code=401, detail=f"Token is invalid: {e}")
 
 

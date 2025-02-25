@@ -1,58 +1,60 @@
 from .condition import ConditionTree, Condition
+from ..enum.operator import Operator
+from ..types import Column
 
 
 class Wrapper:
     def __init__(self,
-                 tenant_field=None,
-                 tenant_value=None,
-                 logical_deleted_field=None,
-                 logical_deleted_value_true=None,
-                 logical_deleted_value_false=None):
+                 tenant_field: Column | None = None,
+                 tenant_value: any = None,
+                 logical_deleted_field: Column | None = None,
+                 logical_deleted_value_true: any = None,
+                 logical_deleted_value_false: any = None):
         self.condition_tree = ConditionTree()
-        self.tenant_field = tenant_field
-        self.tenant_value = tenant_value
-        self.logical_deleted_field = logical_deleted_field
-        self.logical_deleted_value_true = logical_deleted_value_true
-        self.logical_deleted_value_false = logical_deleted_value_false
+        self.tenant_field: Column | None = tenant_field
+        self.tenant_value: any = tenant_value
+        self.logical_deleted_field: Column | None = logical_deleted_field
+        self.logical_deleted_value_true: any = logical_deleted_value_true
+        self.logical_deleted_value_false: any = logical_deleted_value_false
 
-    def eq(self, field, value) -> 'Wrapper':
+    def eq(self, field: Column, value: any) -> 'Wrapper':
         self.condition_tree.add_condition(Condition(field, value))
         return self
 
-    def ne(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, value, '!='))
+    def ne(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, value, Operator.NE))
         return self
 
-    def gt(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, value, '>'))
+    def gt(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, value, Operator.GT))
         return self
 
-    def ge(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, value, '>='))
+    def ge(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, value, Operator.GE))
         return self
 
-    def lt(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, value, '<'))
+    def lt(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, value, Operator.LT))
         return self
 
-    def le(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, value, '<='))
+    def le(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, value, Operator.LE))
         return self
 
-    def in_(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, value, 'in'))
+    def in_(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, value, Operator.IN))
         return self
 
-    def l_like(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, f'%{value}', 'like'))
+    def l_like(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, f'%{value}', Operator.LIKE))
         return self
 
-    def r_like(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, f'{value}%', 'like'))
+    def r_like(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, f'{value}%', Operator.LIKE))
         return self
 
-    def like(self, field, value) -> 'Wrapper':
-        self.condition_tree.add_condition(Condition(field, f'%{value}%', 'like'))
+    def like(self, field: Column, value: any) -> 'Wrapper':
+        self.condition_tree.add_condition(Condition(field, f'%{value}%', Operator.LIKE))
         return self
 
     def or_(self, wrapper: 'Wrapper') -> 'Wrapper':

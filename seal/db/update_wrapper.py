@@ -1,43 +1,57 @@
 import datetime
-
-from .wrapper import Wrapper
-from .sql_builder import build_update, build_delete
 from dataclasses import fields
+
+from . import structures
+from .protocol import IDataSource
+from .sql_builder import build_update, build_delete
+from .wrapper import Wrapper
+from ..types import Column
 
 
 class UpdateWrapper(Wrapper):
 
     def __init__(self,
-                 table,
-                 database=None,
-                 data_source=None,
-                 tenant_field=None,
-                 tenant_value=None,
-                 updated_by_field=None,
-                 updated_at_field=None,
-                 logical_deleted_field=None,
-                 logical_deleted_value_true=None,
-                 logical_deleted_value_false=None):
+                 table: str,
+                 database: None | str = None,
+                 data_source: IDataSource = None,
+                 tenant_field: Column | None = None,
+                 tenant_value: any = None,
+                 updated_by_field: Column | None = None,
+                 updated_at_field: any = None,
+                 logical_deleted_field: Column | None = None,
+                 logical_deleted_value_true: any = None,
+                 logical_deleted_value_false: any = None):
         super().__init__(tenant_field=tenant_field,
                          tenant_value=tenant_value,
                          logical_deleted_field=logical_deleted_field,
                          logical_deleted_value_true=logical_deleted_value_true,
                          logical_deleted_value_false=logical_deleted_value_false)
-        self.table = table
+        self.database: None | str = database
+        self.table: str = table
         if database is not None and database != '':
             self.table = f'{database}.{table}'
-        self.data_source = data_source
-        self.updated_by_field = updated_by_field
-        self.updated_at_field = updated_at_field
-        self.update_fields = {}
+        self.data_source: IDataSource | None = data_source
+        self.updated_by_field: any = updated_by_field
+        self.updated_at_field: any = updated_at_field
+        self.update_fields: dict = {}
 
-    def set(self, field, value) -> 'UpdateWrapper':
+        self.model = structures.get(data_source=self.data_source.get_name(),
+                                    database=database or data_source.get_default_database(),
+                                    table=table)
+        if self.model is None:
+            self.model = self.data_source.load_structure(database, table)
+            structures.register(data_source=self.data_source.get_name(),
+                                database=database or data_source.get_default_database(),
+                                table=table,
+                                structure=self.model)
+
+    def set(self, field: Column, value: any) -> 'UpdateWrapper':
         self.update_fields[field] = value
         return self
 
-    def read(self, entity) -> 'UpdateWrapper':
+    def set_all(self, entity: any) -> 'UpdateWrapper':
         if isinstance(entity, dict):
-            for field in fields(self.data_source.get_data_structure(self.table)):
+            for field in fields(self.model):
                 if field.name != 'id' and field.name in entity:
                     self.update_fields[field.name] = entity[field.name]
             return self
@@ -53,7 +67,6 @@ class UpdateWrapper(Wrapper):
             raise ValueError('unsupported update all')
 
         self.handle_public_fields(**options)
-
         sql, args = build_update(self)
         return self.data_source.get_executor().update(sql, args)
 

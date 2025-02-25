@@ -1,23 +1,24 @@
 from dataclasses import fields
 from typing import Any, List, Tuple
 
+from seal.db.protocol import IDataSource
 from seal.model.result import Result, Results
 from .sql_builder import build_select, build_count
 from .structures import structures
 from .wrapper import Wrapper
-from seal.db.protocol import IDataSource
+from ..types import Column
 
 
 class QueryWrapper(Wrapper):
     def __init__(self,
                  table: str,
-                 database=None,
+                 database: str = None,
                  data_source: IDataSource = None,
-                 tenant_field=None,
-                 tenant_value=None,
-                 logical_deleted_field=None,
-                 logical_deleted_value_true=None,
-                 logical_deleted_value_false=None):
+                 tenant_field: Column | None = None,
+                 tenant_value: any = None,
+                 logical_deleted_field: Column | None = None,
+                 logical_deleted_value_true: any = None,
+                 logical_deleted_value_false: any = None):
         super().__init__(tenant_field=tenant_field,
                          tenant_value=tenant_value,
                          logical_deleted_field=logical_deleted_field,

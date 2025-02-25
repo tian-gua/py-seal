@@ -1,6 +1,7 @@
 import time
 
 import pymysql
+from loguru import logger
 from pymysql.connections import Connection as PyMySQLConnection
 from pymysql.cursors import DictCursor
 
@@ -80,15 +81,15 @@ class ConnectionPool:
             raise Exception('No available connection')
 
         while True:
-            time.sleep(0.1)
-
-            if timeout is not None and time.time() - start_time > timeout:
-                raise Exception('No available connection')
-
             connection = self.occupy()
             if connection is not None:
                 connection.ping()
                 return connection
+            else:
+                time.sleep(0.1)
+
+                if timeout is not None and time.time() - start_time > timeout:
+                    raise Exception('No available connection')
 
     def occupy(self) -> MysqlConnection | None:
         for connection in self._connections:
@@ -103,3 +104,12 @@ class ConnectionPool:
             self._connections.remove(mysql_connection)
         else:
             mysql_connection.status = ConnectionStatus.IDLE
+
+    def ping(self, seconds=60):
+        while True:
+            time.sleep(seconds)
+            ids = []
+            for connection in self._connections:
+                ids.append(id(connection))
+                connection.ping()
+            logger.info(f'active connections {ids}')
