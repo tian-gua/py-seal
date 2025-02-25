@@ -1,3 +1,4 @@
+import threading
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
@@ -28,29 +29,37 @@ class Seal:
 
         self._web_context = web_context
 
-    def init(self, config_path):
+    def init(self, config_path: str, init_loguru: bool = True, init_database: bool = True):
         configurator.load(config_path)
         self._initialized = True
 
-        logger.add(self.get_config('seal', 'loguru', 'path'),
-                   rotation=self.get_config('seal', 'loguru', 'rotation'),
-                   retention=self.get_config('seal', 'loguru', 'retention'),
-                   level=self.get_config('seal', 'loguru', 'level'))
+        if init_loguru:
+            logger.add(self.get_config('seal', 'loguru', 'path'),
+                       rotation=self.get_config('seal', 'loguru', 'rotation'),
+                       retention=self.get_config('seal', 'loguru', 'retention'),
+                       level=self.get_config('seal', 'loguru', 'level'))
 
-        data_source_config = self.get_config('seal', 'data_source')
-        for data_source_name, data_source_conf in data_source_config.items():
-            data_source = self.get_config('seal', 'data_source', data_source_name)
-            if 'mysql' == data_source.get('dialect'):
-                from .db.mysql.mysql_data_source import MysqlDataSource
-                self.data_source_dict[data_source_name] = MysqlDataSource(name=data_source_name, conf=data_source_conf)
-            elif 'sqlite' == data_source.get('dialect'):
-                from .db.sqlite.sqlite_data_source import SqliteDataSource
-                self.data_source_dict[data_source_name] = SqliteDataSource(name=data_source_name, conf=data_source_conf)
-            else:
-                raise ValueError(f'不支持的数据源类型: {data_source.get("dialect")}')
+        if init_database:
+            data_source_config = self.get_config('seal', 'data_source')
+            for data_source_name, data_source_conf in data_source_config.items():
+                data_source = self.get_config('seal', 'data_source', data_source_name)
+                if 'mysql' == data_source.get('dialect'):
+                    from .db.mysql.mysql_data_source import MysqlDataSource
+                    mysql_ds = MysqlDataSource(name=data_source_name, conf=data_source_conf)
+                    self.data_source_dict[data_source_name] = mysql_ds
 
-        if 'default' not in self.data_source_dict:
-            raise ValueError('unknown default data source')
+                    # a new thread for keeping connections active
+                    threading.Thread(target=mysql_ds.ping, args=[data_source.get('ping')], daemon=True).start()
+
+                elif 'sqlite' == data_source.get('dialect'):
+                    from .db.sqlite.sqlite_data_source import SqliteDataSource
+                    self.data_source_dict[data_source_name] = SqliteDataSource(name=data_source_name, conf=data_source_conf)
+                else:
+                    raise ValueError(f'不支持的数据源类型: {data_source.get("dialect")}')
+
+            if 'default' not in self.data_source_dict:
+                raise ValueError('unknown default data source')
+
         logger.info(f'init seal with config: {config_path}')
         return self
 

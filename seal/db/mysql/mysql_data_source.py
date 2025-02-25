@@ -52,3 +52,6 @@ class MysqlDataSource:
             c.close()
             conn.commit()
             conn.close()
+
+    def ping(self, seconds):
+        self.connection_pool.ping(seconds)

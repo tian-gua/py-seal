@@ -22,3 +22,6 @@ class IDataSource(Protocol):
 
     def get_default_database(self) -> str:
         ...
+
+    def ping(self, seconds):
+        ...

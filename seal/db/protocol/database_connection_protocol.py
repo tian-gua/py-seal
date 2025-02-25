@@ -16,3 +16,6 @@ class IDatabaseConnection(Protocol):
 
     def close(self):
         ...
+
+    def ping(self, seconds):
+        ...

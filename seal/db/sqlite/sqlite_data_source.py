@@ -2,10 +2,10 @@ import sqlite3
 from sqlite3 import Connection
 from typing import Any, Dict
 
+from seal.db.protocol import IExecutor, IDatabaseConnection
+from .executor import SqliteExecutor
 from .sqlite_connection import SqliteConnection
 from .table_info import TableField, TableInfo
-from .executor import SqliteExecutor
-from seal.db.protocol import IExecutor, IDatabaseConnection
 
 
 def dict_factory(cursor, row):
@@ -62,3 +62,6 @@ class SqliteDataSource:
         finally:
             c.close()
             conn.close()
+
+    def ping(self, seconds):
+        pass
