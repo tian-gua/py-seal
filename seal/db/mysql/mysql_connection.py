@@ -1,4 +1,5 @@
 import time
+from threading import Lock
 
 import pymysql
 from loguru import logger
@@ -14,9 +15,11 @@ class MysqlConnection:
         self.pool: ConnectionPool = pool
         self.status: ConnectionStatus = ConnectionStatus.IDLE
         self.create_time = create_time
+        self.conn_lock = Lock()
 
     def close(self):
         self.pool.release(self)
+        self.conn_lock.release()
 
     def cursor(self):
         return self.connection.cursor()
@@ -28,10 +31,16 @@ class MysqlConnection:
         self.connection.rollback()
 
     def begin(self):
+        self.conn_lock.acquire_lock()
         self.connection.begin()
 
     def ping(self):
-        self.connection.ping(reconnect=True)
+        try:
+            if not self.conn_lock.acquire_lock(timeout=10):
+                raise Exception(f'Connection [{id(self)}] is locked')
+            self.connection.ping(reconnect=True)
+        finally:
+            self.conn_lock.release()
 
     def insert_id(self):
         return self.connection.insert_id()
@@ -67,7 +76,6 @@ class ConnectionPool:
 
         connection = self.occupy()
         if connection is not None:
-            connection.ping()
             return connection
 
         if len(self._connections) < self._max_connections:
@@ -83,7 +91,6 @@ class ConnectionPool:
         while True:
             connection = self.occupy()
             if connection is not None:
-                connection.ping()
                 return connection
             else:
                 time.sleep(0.1)
