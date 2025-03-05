@@ -2,7 +2,7 @@ import datetime
 from dataclasses import fields
 
 from . import structures
-from .protocol import IDataSource
+from .protocol import IDataSource, IEntity
 from .sql_builder import build_update, build_delete
 from .wrapper import Wrapper
 from ..types import Column
@@ -11,7 +11,7 @@ from ..types import Column
 class UpdateWrapper(Wrapper):
 
     def __init__(self,
-                 table: str,
+                 table: str | IEntity,
                  database: None | str = None,
                  data_source: IDataSource = None,
                  tenant_field: Column | None = None,
@@ -21,15 +21,19 @@ class UpdateWrapper(Wrapper):
                  logical_deleted_field: Column | None = None,
                  logical_deleted_value_true: any = None,
                  logical_deleted_value_false: any = None):
-        super().__init__(tenant_field=tenant_field,
+        super().__init__(table=table,
+                         tenant_field=tenant_field,
                          tenant_value=tenant_value,
                          logical_deleted_field=logical_deleted_field,
                          logical_deleted_value_true=logical_deleted_value_true,
                          logical_deleted_value_false=logical_deleted_value_false)
-        self.database: None | str = database
-        self.table: str = table
+
+        if self.table is None or self.table == '':
+            raise ValueError('table is required')
+
         if database is not None and database != '':
             self.table = f'{database}.{table}'
+
         self.data_source: IDataSource | None = data_source
         self.updated_by_field: any = updated_by_field
         self.updated_at_field: any = updated_at_field

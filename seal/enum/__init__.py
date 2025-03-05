@@ -1,3 +1,6 @@
 from .dialects import Dialects
+from .result_type import ResultType
 
-__all__ = ['Dialects']
+ENTITY = ResultType.ENTITY
+
+__all__ = ['Dialects', 'ENTITY']

@@ -1,4 +1,4 @@
-from typing import Protocol, Any
+from typing import Protocol
 
 from .database_connection_protocol import IDatabaseConnection
 from .executor_protocol import IExecutor
@@ -14,7 +14,7 @@ class IDataSource(Protocol):
     def get_executor(self) -> IExecutor:
         ...
 
-    def load_structure(self, database: str, table: str) -> Any:
+    def load_structure(self, database: str, table: str) -> any:
         ...
 
     def get_connection(self) -> IDatabaseConnection:

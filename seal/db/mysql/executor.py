@@ -1,11 +1,11 @@
-from typing import Tuple, Any, List
+from typing import List
 
 from loguru import logger
 
-from seal.db.protocol import IDatabaseConnection
-from seal.db.protocol.data_source_protocol import IDataSource
-from seal.db.transaction import sql_context
-from seal.model.result import Result, Results
+from ..protocol import IDatabaseConnection
+from ..protocol.data_source_protocol import IDataSource
+from ..result import Result, Results
+from ..transaction import sql_context
 
 
 class MysqlExecutor:
@@ -13,7 +13,7 @@ class MysqlExecutor:
     def __init__(self, data_source: IDataSource):
         self.data_source = data_source
 
-    def find(self, sql: str, args: Tuple[Any, ...], bean_type: Any) -> Result:
+    def find(self, sql: str, args: tuple[any, ...], model: object) -> Result | None:
         self.debug(sql, args)
 
         connection: IDatabaseConnection = self.get_connection()
@@ -28,14 +28,14 @@ class MysqlExecutor:
             if row is None:
                 return Result.empty()
 
-            return Result(row=row, bean_type=bean_type)
+            return Result(row=row, model=model)
         except Exception as e:
             raise e
         finally:
             cursor.close()
             self.close_connection(connection)
 
-    def find_list(self, sql: str, args: Tuple[Any, ...], bean_type: Any) -> Results:
+    def find_list(self, sql: str, args: tuple[any, ...], model: object) -> Results | None:
         self.debug(sql, args)
 
         connection: IDatabaseConnection = self.get_connection()
@@ -50,14 +50,14 @@ class MysqlExecutor:
             if rows is None:
                 return Results.empty()
 
-            return Results(rows=rows, bean_type=bean_type)
+            return Results(rows=rows, model=model)
         except Exception as e:
             raise e
         finally:
             cursor.close()
             self.close_connection(connection)
 
-    def count(self, sql: str, args: Tuple[Any, ...]) -> int | None:
+    def count(self, sql: str, args: tuple[any, ...]) -> int | None:
         self.debug(sql, args)
 
         connection: IDatabaseConnection = self.get_connection()
@@ -79,7 +79,7 @@ class MysqlExecutor:
             cursor.close()
             self.close_connection(connection)
 
-    def update(self, sql: str, args: Tuple[Any, ...]) -> int | None:
+    def update(self, sql: str, args: tuple[any, ...]) -> int | None:
         self.debug(sql, args)
 
         connection: IDatabaseConnection = self.get_connection()
@@ -96,7 +96,7 @@ class MysqlExecutor:
             cursor.close()
             self.close_connection(connection)
 
-    def insert(self, sql: str, args: Tuple[Any, ...]) -> int | None:
+    def insert(self, sql: str, args: tuple[any, ...]) -> int | None:
         self.debug(sql, args)
 
         connection: IDatabaseConnection = self.get_connection()
@@ -113,7 +113,7 @@ class MysqlExecutor:
             cursor.close()
             self.close_connection(connection)
 
-    def insert_bulk(self, sql: str, args: List[Tuple[Any, ...]]) -> int | None:
+    def insert_bulk(self, sql: str, args: List[tuple[any, ...]]) -> int | None:
         logger.debug(f'#### sql: {sql}')
 
         connection: IDatabaseConnection = self.get_connection()
@@ -134,7 +134,7 @@ class MysqlExecutor:
             cursor.close()
             self.close_connection(connection)
 
-    def custom_query(self, sql: str, args: Tuple[Any, ...]) -> Results:
+    def custom_query(self, sql: str, args: tuple[any, ...]) -> Results | None:
         self.debug(sql, args)
 
         connection: IDatabaseConnection = self.get_connection()
@@ -156,7 +156,7 @@ class MysqlExecutor:
             cursor.close()
             self.close_connection(connection)
 
-    def custom_update(self, sql: str, args: Tuple[Any, ...]) -> int | None:
+    def custom_update(self, sql: str, args: tuple[any, ...]) -> int | None:
         self.debug(sql, args)
 
         connection: IDatabaseConnection = self.get_connection()

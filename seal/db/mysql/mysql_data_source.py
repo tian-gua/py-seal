@@ -1,9 +1,9 @@
 from typing import Dict, Any
 
-from seal.db.protocol import IExecutor
 from .executor import MysqlExecutor
 from .mysql_connection import ConnectionPool
 from .table_info import TableField, TableInfo
+from ..protocol import IExecutor, IEntity
 
 
 class MysqlDataSource:
@@ -29,7 +29,7 @@ class MysqlDataSource:
     def get_default_database(self) -> str:
         return self.default_database
 
-    def load_structure(self, database: str, table: str) -> Any:
+    def load_structure(self, database: str, table: str) -> any:
         conn = self.get_connection()
         conn.begin()
         c = conn.cursor()
@@ -47,7 +47,7 @@ class MysqlDataSource:
                 table_fields.append(table_field)
 
             table_info = TableInfo(table=table, table_fields=table_fields)
-            return table_info.parse_model()
+            return table_info.model
         finally:
             c.close()
             conn.commit()

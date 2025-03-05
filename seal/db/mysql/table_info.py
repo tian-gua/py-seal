@@ -1,5 +1,4 @@
 from dataclasses import make_dataclass, field
-from typing import Any
 
 
 class TableField:
@@ -18,11 +17,6 @@ class TableInfo:
     def __init__(self, table, table_fields: list[TableField]):
         self.table = table
         self.table_fields = table_fields
-        self.model = None
 
-    def parse_model(self):
-        if self.model is None:
-            self.model = make_dataclass(self.table,
-                                        [(table_field.field_, Any, field(default=None)) for table_field in
-                                         self.table_fields])
-        return self.model
+        fields = [(table_field.field_, any, field(default=None)) for table_field in self.table_fields]
+        self.model: object = make_dataclass(self.table, fields=fields)

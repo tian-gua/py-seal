@@ -6,7 +6,7 @@ import jwt
 from loguru import logger
 
 from seal.db.protocol import IDataSource
-from seal.model.result import Results
+from seal.db.result import Results
 from .cache import LRUCache, Cache
 from .config import configurator
 from .context import web_context, WebContext

@@ -2,10 +2,10 @@ import sqlite3
 from sqlite3 import Connection
 from typing import Any, Dict
 
-from seal.db.protocol import IExecutor, IDatabaseConnection
 from .executor import SqliteExecutor
 from .sqlite_connection import SqliteConnection
 from .table_info import TableField, TableInfo
+from ..protocol import IExecutor, IDatabaseConnection
 
 
 def dict_factory(cursor, row):
@@ -41,7 +41,7 @@ class SqliteDataSource:
     def get_default_database(self) -> str:
         return ''
 
-    def load_structure(self, database: str, table: str) -> Any:
+    def load_structure(self, database: str, table: str) -> any:
         conn = self.get_connection()
         c = conn.cursor()
         try:
@@ -58,7 +58,7 @@ class SqliteDataSource:
                 table_fields.append(table_field)
 
             table_info = TableInfo(table=table, table_fields=table_fields)
-            return table_info.parse_model()
+            return table_info.model
         finally:
             c.close()
             conn.close()
